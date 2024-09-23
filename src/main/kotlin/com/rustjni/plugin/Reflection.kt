@@ -4,7 +4,7 @@ import org.gradle.api.Project
 import java.io.File
 
 // Data class to represent method signature
-data class MethodSignature(val methodName: String, val returnType: String, val parameters: List<String>)
+internal data class MethodSignature(val methodName: String, val returnType: String, val parameters: List<String>)
 
 internal object Reflection {
 
@@ -104,7 +104,7 @@ internal object Reflection {
         }
     }
 
-    internal fun generateMethodDeclarations(
+    fun generateMethodDeclarations(
         project: Project,
         extension: RustJniExtension,
         isKotlinFile: Boolean
