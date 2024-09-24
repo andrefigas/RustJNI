@@ -201,13 +201,13 @@ internal object Reflection {
     ): String {
         val methodDeclarations = methodsToGenerate.joinToString("\n\n") { method ->
             if (isKotlinFile) {
-                "private external fun ${method.methodName}(${method.parameters.joinToString(", ")}): ${method.returnType}"
+                "private external fun ${method.methodName.substringAfterLast('_')}(${method.parameters.joinToString(", ")}): ${method.returnType}"
             } else {
                 val paramsJava = method.parameters.joinToString(", ") { param ->
                     val parts = param.split(":")
                     "${parts[1].trim()} ${parts[0].trim()}"
                 }
-                "private static native ${method.returnType} ${method.methodName}($paramsJava);"
+                "private static native ${method.returnType} ${method.methodName.substringAfterLast('_')}($paramsJava);"
             }
         }
 
