@@ -1,4 +1,4 @@
-package com.rustjni.plugin
+package io.github.andrefigas.rustjni
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -226,7 +226,7 @@ class RustJNI : Plugin<Project> {
                     \\) /  o o  \\ (/
                       '_   -   _'
                       / '-----' \\
-            _________________________________________________
+            _________________________________________________________
             Do your rust implementation there: /rust/src/rust_jni.rs
             ---------------------------------------------------------"#;
 

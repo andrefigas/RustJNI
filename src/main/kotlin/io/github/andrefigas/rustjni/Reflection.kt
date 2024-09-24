@@ -1,4 +1,4 @@
-package com.rustjni.plugin
+package io.github.andrefigas.rustjni
 
 import org.gradle.api.Project
 import java.io.File

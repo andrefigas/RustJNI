@@ -1,4 +1,4 @@
-package com.rustjni.plugin
+package io.github.andrefigas.rustjni
 
 object Prebuilt{
 

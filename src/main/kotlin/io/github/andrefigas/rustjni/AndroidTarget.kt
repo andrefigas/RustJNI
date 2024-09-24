@@ -1,4 +1,4 @@
-package com.rustjni.plugin
+package io.github.andrefigas.rustjni
 
 object AndroidTarget {
     const val ARMV7_LINUX_ANDROIDEABI = "armv7-linux-androideabi"

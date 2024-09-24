@@ -1,9 +1,9 @@
-package com.rustjni.plugin
+package io.github.andrefigas.rustjni
 
-import com.rustjni.plugin.AndroidTarget.AARCH64_LINUX_ANDROID
-import com.rustjni.plugin.AndroidTarget.ARMV7_LINUX_ANDROIDEABI
-import com.rustjni.plugin.AndroidTarget.I686_LINUX_ANDROID
-import com.rustjni.plugin.AndroidTarget.X86_64_LINUX_ANDROID
+import io.github.andrefigas.rustjni.AndroidTarget.AARCH64_LINUX_ANDROID
+import io.github.andrefigas.rustjni.AndroidTarget.ARMV7_LINUX_ANDROIDEABI
+import io.github.andrefigas.rustjni.AndroidTarget.I686_LINUX_ANDROID
+import io.github.andrefigas.rustjni.AndroidTarget.X86_64_LINUX_ANDROID
 
 open class RustJniExtension {
     var libName: String = "my_rust_lib"

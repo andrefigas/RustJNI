@@ -1,4 +1,4 @@
-package com.rustjni.plugin
+package io.github.andrefigas.rustjni
 
 data class ArchitectureConfig(val target : String,
                               val linker: String,
