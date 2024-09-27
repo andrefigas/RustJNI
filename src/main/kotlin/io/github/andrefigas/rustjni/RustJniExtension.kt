@@ -11,6 +11,7 @@ open class RustJniExtension {
     var preBuilt: String = ""
     var jniHost: String = defaultJniHost
     var exportFunctions = true
+    var applyAsCompileDependency = true
 
     companion object {
         internal const val defaultJniHost = "com.yourpackage.YorClass"

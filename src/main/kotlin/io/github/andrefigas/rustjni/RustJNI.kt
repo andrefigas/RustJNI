@@ -7,8 +7,19 @@ import java.util.Properties
 
 class RustJNI : Plugin<Project> {
 
+    private companion object{
+        const val RUST_JNI_COMPILE = "rust-jni-compile"
+    }
+
     override fun apply(project: Project) {
         val extension = project.extensions.create("rustJni", RustJniExtension::class.java)
+
+        if(extension.applyAsCompileDependency){
+            project.tasks.matching { it.name.startsWith("compile") }.configureEach {
+                this.dependsOn(RUST_JNI_COMPILE)
+            }
+        }
+
         registerCompileTask(project, extension)
         registerInitTask(project, extension)
         configureAndroidSettings(project, extension)
@@ -50,7 +61,7 @@ class RustJNI : Plugin<Project> {
     }
 
     private fun registerCompileTask(project: Project, extension: RustJniExtension) {
-        project.tasks.register("rust-jni-compile") {
+        project.tasks.register(RUST_JNI_COMPILE) {
             group = "build"
             description = "Compiles Rust code for specified architectures"
 

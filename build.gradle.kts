@@ -9,7 +9,7 @@ repositories {
     google()
 }
 
-version = "0.0.10"
+version = "0.0.11"
 group = "io.github.andrefigas.rustjni"
 
 gradlePlugin {
@@ -34,5 +34,5 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(gradleApi())
     implementation(localGroovy())
-    implementation("com.android.tools.build:gradle:8.1.1")
+    compileOnly("com.android.tools.build:gradle:8.1.1")
 }
