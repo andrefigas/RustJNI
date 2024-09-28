@@ -60,14 +60,8 @@ This configures the Rust library to be compiled for the `aarch64_linux_android` 
 
 ### How to create or compile a Rust library for Android?
 
-Once your setup is complete, you just need to configure Gradle to compile your Rust code before the Android code.
+Once the setup is finished, you only need to compile your project to ensure the Rust code is compiled before the Android code.
 
-**build.gradle.kts** (module level)
-```kotlin
-tasks.matching { it.name.startsWith("compile") }.configureEach {
-    dependsOn("rust-jni-compile")
-}
-```
 
 This will compile your Rust project. If you don't have one, a new project will be created here:
 `/rust/src/rust_jni.rs`
@@ -190,9 +184,5 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-}
-
-tasks.matching { it.name.startsWith("compile") }.configureEach {
-    dependsOn("rust-jni-compile")
 }
 ```
