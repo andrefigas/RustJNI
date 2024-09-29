@@ -6,7 +6,11 @@ data class ArchitectureConfig(val target : String,
 ){
 
     companion object {
-        const val DEFAULT_AR = "llvm-ar"
+        private fun isWindows(): Boolean {
+            return System.getProperty("os.name").toLowerCase().contains("win")
+        }
+
+        val DEFAULT_AR = if (isWindows()) "llvm-ar.exe" else "llvm-ar"
     }
 
 }
