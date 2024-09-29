@@ -98,7 +98,7 @@ class RustJNI : Plugin<Project> {
         architectures.forEach { archConfig ->
             project.exec {
                 workingDir = rustDir
-                commandLine = listOf("rustup", "target", "add", archConfig.target)
+                commandLine = listOf("rustup", "--verbose", "target", "add", archConfig.target)
             }
         }
     }
@@ -114,7 +114,7 @@ class RustJNI : Plugin<Project> {
         architectures.forEach { archConfig ->
             project.exec {
                 workingDir = rustDir
-                commandLine = listOf("cargo", "build", "--target", archConfig.target, "--release")
+                commandLine = listOf("cargo", "build", "--target", archConfig.target, "--release", "--verbose")
             }
         }
     }
@@ -302,9 +302,10 @@ class RustJNI : Plugin<Project> {
 
         return buildString {
             architectures.forEach { archConfig ->
+                val linker = OSHelper.addLinkerExtensionIfNeeded(archConfig.linker)
                 appendLine("[target.${archConfig.target}]")
                 appendLine("""ar = "${prebuiltPath}${archConfig.ar}"""")
-                appendLine("""linker = "${prebuiltPath}${archConfig.linker}"""")
+                appendLine("""linker = "${prebuiltPath}${linker}"""")
                 appendLine()
             }
         }
