@@ -7,13 +7,10 @@ Although Android Studio does not offer robust support for Rust, this plugin prov
 | Requirement                                         | Min. Version |
 |-----------------------------------------------------|--------------|
 | [Rust](https://www.rust-lang.org/learn/get-started) | 1.79.0       |
-| NDK (Tools -> SDK Manager -> SDK Tools -> NDK)      | 25.2.9519653 |
+| NDK (Tools -> SDK Manager -> SDK Tools -> NDK)      |              |
 
 *There are plans to lower certain version requirements.<br/>
 This will require some investigation and testing.*
-
-## Known Issues
-I need to apply some changes before it works for Windows. For now, it is tested only for macOS.
 
 ## Setup
 
