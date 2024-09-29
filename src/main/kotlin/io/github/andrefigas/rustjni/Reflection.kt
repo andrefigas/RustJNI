@@ -94,17 +94,22 @@ internal object Reflection {
         val classLineIndex = lines.size - 1
         val classLine = lines[classLineIndex]
         val classIndentation = classLine.takeWhile { it == ' ' || it == '\t' }
+
+        // Maintain consistent indentation for the entire block
         val memberIndentation = classIndentation + "    "
 
         return codeToInsert.lines().joinToString("\n") { line ->
-            val lineIndentation = line.takeWhile { it == ' ' || it == '\t' }
             val content = line.trimStart()
-            val totalIndentation = memberIndentation + lineIndentation
-            if (content.isNotEmpty()) totalIndentation + content else totalIndentation.trimEnd()
+            if (content.isNotEmpty()) {
+                // Apply proper indentation to non-empty lines
+                memberIndentation + content
+            } else {
+                line // Maintain empty lines as-is
+            }
         }
     }
 
-    fun generateMethodDeclarations(
+    private fun generateMethodDeclarations(
         project: Project,
         extension: RustJniExtension,
         isKotlinFile: Boolean
@@ -213,28 +218,28 @@ internal object Reflection {
 
         return if (isKotlinFile) {
             """
-            //<RustJNI>
-            // auto-generated code
-            // Checkout the source: rust/src/rust_jni.rs
-            $methodDeclarations
-
-            init {
-                System.loadLibrary("$libName")
-            }
-            //</RustJNI>
-            """.trimIndent()
+        //<RustJNI>
+        // auto-generated code
+        // Checkout the source: rust/src/rust_jni.rs
+        
+        $methodDeclarations
+        
+        init { System.loadLibrary("$libName") }
+        
+        //</RustJNI>
+        """.trim() // Remove espaços adicionais no começo e no final do bloco
         } else {
             """
-            //<RustJNI>
-            // auto-generated code
-            // Checkout the source: rust/src/rust_jni.rs
-            $methodDeclarations
-
-            static {
-                System.loadLibrary("$libName");
-            }
-            //</RustJNI>
-            """.trimIndent()
+        //<RustJNI>
+        // auto-generated code
+        // Checkout the source: rust/src/rust_jni.rs
+        
+        $methodDeclarations
+        
+        static { System.loadLibrary("$libName"); }
+        
+        //</RustJNI>
+        """.trim()
         }
     }
 
