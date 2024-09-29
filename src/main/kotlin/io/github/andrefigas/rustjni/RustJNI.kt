@@ -39,7 +39,7 @@ class RustJNI : Plugin<Project> {
         configureRustEnvironment(project, extension)
     }
 
-    private fun rustDirExists(project: Project) = project.file("${project.rootProject.projectDir}/rust").exists()
+    private fun rustDirExists(project: Project) = project.file("${project.rootProject.projectDir}${File.separator}rust").exists()
 
     private fun createNewRustProject(project: Project) {
         project.exec {
@@ -81,7 +81,7 @@ class RustJNI : Plugin<Project> {
     }
 
     private fun compileRustCode(project: Project, extension: RustJniExtension) {
-        val rustDir = project.file("${project.rootProject.projectDir}/rust")
+        val rustDir = project.file("${project.rootProject.projectDir}${File.separator}rust")
         validateArchitectures(extension)
         addRustTargets(project, rustDir, extension.architecturesList)
         cleanBuildDirectory(rustDir)
@@ -120,14 +120,14 @@ class RustJNI : Plugin<Project> {
     }
 
     private fun copyCompiledLibraries(project: Project, extension: RustJniExtension) {
-        val rustDir = project.file("${project.rootProject.projectDir}/rust")
+        val rustDir = project.file("${project.rootProject.projectDir}${File.separator}rust")
         val libName = extension.libName
         val architectures = extension.architecturesList
 
         architectures.forEach { archConfig ->
             val outputDir = createOutputDirForArchitecture(rustDir, archConfig)
             val fileExtension = getFileExtensionForTarget(archConfig.target)
-            val sourceLib = File(rustDir, "target/${archConfig.target}/release/lib${libName}$fileExtension")
+            val sourceLib = File(rustDir, "target${File.separator}${archConfig.target}${File.separator}release${File.separator}lib${libName}$fileExtension")
             val destLib = File(outputDir, "lib${libName}$fileExtension")
             copyLibraryFile(sourceLib, destLib)
         }
@@ -142,7 +142,7 @@ class RustJNI : Plugin<Project> {
             "aarch64-apple-ios" -> "ios-arm64"
             else -> archConfig.target.replace('-', '_')
         }
-        val outputDir = File(rustDir, "build/$outputDirName")
+        val outputDir = File(rustDir, "build${File.separator}$outputDirName")
         outputDir.mkdirs()
         return outputDir
     }
@@ -173,7 +173,7 @@ class RustJNI : Plugin<Project> {
     }
 
     private fun configCargo(project: Project, extension: RustJniExtension) {
-        val configToml = project.file("${project.rootProject.projectDir}/rust/Cargo.toml")
+        val configToml = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}Cargo.toml")
         configToml.writeText(buildCargoConfig(extension))
         println("Cargo.toml updated")
     }
@@ -187,7 +187,7 @@ class RustJNI : Plugin<Project> {
 
             [lib]
             crate-type = ["cdylib"]
-            path = "src/rust_jni.rs"
+            path = "src${File.separator}rust_jni.rs"
 
             [dependencies]
             jni = "0.19"
@@ -195,7 +195,7 @@ class RustJNI : Plugin<Project> {
     }
 
     private fun configRustLib(project: Project, extension: RustJniExtension) {
-        val rustSrcDir = project.file("${project.rootProject.projectDir}/rust/src")
+        val rustSrcDir = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}src")
         deleteMainRsFile(rustSrcDir)
         createRustJNIFile(rustSrcDir, extension.jniHost)
     }
@@ -238,7 +238,7 @@ class RustJNI : Plugin<Project> {
                       '_   -   _'
                       / '-----' \\
             _________________________________________________________
-            Do your rust implementation there: /rust/src/rust_jni.rs
+            Do your rust implementation there: ${File.separator}rust${File.separator}src${File.separator}rust_jni.rs
             ---------------------------------------------------------"#;
 
                 env.new_string(output)
@@ -249,7 +249,7 @@ class RustJNI : Plugin<Project> {
     }
 
     private fun generateConfigToml(project: Project, extension: RustJniExtension) {
-        val configToml = project.file("${project.rootProject.projectDir}/rust/.cargo/config.toml")
+        val configToml = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}.cargo${File.separator}config.toml")
         if (configToml.exists()) {
             println("The file 'config.toml' already exists. Skipping generation.")
             return
@@ -262,7 +262,7 @@ class RustJNI : Plugin<Project> {
 
     private fun getPrebuiltPath(project: Project, extension: RustJniExtension): String {
         val props = Properties()
-        project.file("${project.rootProject.projectDir}/local.properties").inputStream().use { props.load(it) }
+        project.file("${project.rootProject.projectDir}${File.separator}local.properties").inputStream().use { props.load(it) }
         val ndkDir = props.getProperty("ndk.dir")
             ?: throw org.gradle.api.GradleException("ndk.dir not defined in local.properties")
 
@@ -289,7 +289,7 @@ class RustJNI : Plugin<Project> {
                 println("No 'prebuilt' specified. Using default for OS: $defaultPrebuilt")
                 defaultPrebuilt
             }
-        }.let { prebuilt -> "$ndkDir/toolchains/llvm/prebuilt/$prebuilt/bin/" }
+        }.let { prebuilt -> "$ndkDir${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuilt${File.separator}bin${File.separator}" }
     }
 
     private fun buildConfigTomlContent(extension: RustJniExtension, prebuiltPath: String): String {

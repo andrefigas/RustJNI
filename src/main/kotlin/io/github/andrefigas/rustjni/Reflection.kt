@@ -142,7 +142,7 @@ internal object Reflection {
     }
 
     private fun readRustJniFile(project: Project): String {
-        val rustLibFile = File(project.rootDir, "rust/src/rust_jni.rs")
+        val rustLibFile = File(project.rootDir, "rust${File.separator}src${File.separator}rust_jni.rs")
         if (!rustLibFile.exists()) {
             throw org.gradle.api.GradleException("Could not find 'rust_jni.rs' file at ${rustLibFile.absolutePath}")
         }
@@ -220,19 +220,19 @@ internal object Reflection {
             """
         //<RustJNI>
         // auto-generated code
-        // Checkout the source: rust/src/rust_jni.rs
+        // Checkout the source: rust${File.separator}src${File.separator}rust_jni.rs
         
         $methodDeclarations
         
         init { System.loadLibrary("$libName") }
         
         //</RustJNI>
-        """.trim() // Remove espaços adicionais no começo e no final do bloco
+        """.trim()
         } else {
             """
         //<RustJNI>
         // auto-generated code
-        // Checkout the source: rust/src/rust_jni.rs
+        // Checkout the source: rust${File.separator}src${File.separator}rust_jni.rs
         
         $methodDeclarations
         

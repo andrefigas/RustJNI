@@ -1,6 +1,7 @@
 package io.github.andrefigas.rustjni
 
 import org.gradle.api.Project
+import java.io.File
 
 internal object AndroidSettings {
 
@@ -10,7 +11,7 @@ internal object AndroidSettings {
             if (androidExtension is com.android.build.gradle.BaseExtension) {
                 androidExtension.sourceSets.getByName("main").apply {
                     // Set jniLibs to only point to the Rust build directory
-                    jniLibs.setSrcDirs(listOf("${project.rootDir}/rust/build"))
+                    jniLibs.setSrcDirs(listOf("${project.rootDir}${File.separator}rust${File.separator}build"))
                 }
                 project.logger.lifecycle("Configured jniLibs.srcDirs: ${androidExtension.sourceSets.getByName("main").jniLibs.srcDirs}")
             } else {
