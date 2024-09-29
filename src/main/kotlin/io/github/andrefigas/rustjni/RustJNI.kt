@@ -187,7 +187,7 @@ class RustJNI : Plugin<Project> {
 
             [lib]
             crate-type = ["cdylib"]
-            path = "src${File.separator}rust_jni.rs"
+            path = "src/rust_jni.rs"
 
             [dependencies]
             jni = "0.19"
@@ -297,6 +297,8 @@ class RustJNI : Plugin<Project> {
         if (architectures.isEmpty()) {
             throw org.gradle.api.GradleException("No architectures specified in rustJni extension")
         }
+
+        val prebuiltPath = OSHelper.doubleSeparatorIfNeeded(prebuiltPath)
 
         return buildString {
             architectures.forEach { archConfig ->

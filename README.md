@@ -27,7 +27,7 @@ ndk.dir=/Users/SomeUser/Library/Android/sdk/ndk/25.2.9519653
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.12"
+    id("io.github.andrefigas.rustjni") version "0.0.13"
 }
 ```
 
@@ -134,7 +134,7 @@ Check your console log for something like this:
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("io.github.andrefigas.rustjni") version "0.0.12"
+    id("io.github.andrefigas.rustjni") version "0.0.13"
 }
 
 rustJni{
