@@ -16,4 +16,13 @@ internal object OSHelper {
         }
     }
 
+    fun addLinkerExtensionIfNeeded(linker: String): String {
+        val windowsLinkerExt = ".cmd"
+        return if (isWindows() && !linker.endsWith(windowsLinkerExt)) {
+            linker + windowsLinkerExt
+        } else {
+            linker
+        }
+    }
+
 }
