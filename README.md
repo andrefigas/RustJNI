@@ -12,6 +12,9 @@ Although Android Studio does not offer robust support for Rust, this plugin prov
 *There are plans to lower certain version requirements.<br/>
 This will require some investigation and testing.*
 
+## Known Issues
+I need to apply some changes before it works for Windows. For now, it is tested only for macOS.
+
 ## Setup
 
 ### Define NDK Location
