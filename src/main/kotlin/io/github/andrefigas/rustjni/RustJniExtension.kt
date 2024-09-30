@@ -8,6 +8,7 @@ import io.github.andrefigas.rustjni.AndroidTarget.X86_64_LINUX_ANDROID
 open class RustJniExtension {
     var libName: String = "my_rust_lib"
     var libVersion: String = "0.1.0"
+    var ndkVersion: String = ""
     var preBuilt: String = ""
     var jniHost: String = defaultJniHost
     var exportFunctions = true

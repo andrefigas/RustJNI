@@ -18,7 +18,7 @@ This will require some investigation and testing.*
 
 Set the NDK location in the `local.properties` file. It should look like this, but with your own path and NDK version:
 ```properties
-ndk.dir=/Users/SomeUser/Library/Android/sdk/ndk/25.2.9519653
+ndk.dir=/Users/<SomeUser>/Library/Android/sdk/ndk
 ```
 
 ### Import Plugin
@@ -27,7 +27,7 @@ ndk.dir=/Users/SomeUser/Library/Android/sdk/ndk/25.2.9519653
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.13"
+    id("io.github.andrefigas.rustjni") version "0.0.14"
 }
 ```
 
@@ -36,6 +36,7 @@ plugins {
 **build.gradle.kts** (module level)
 ```kotlin
 rustJni{
+    ndkVersion = "25.2.9519653"
     architectures {
         armv7_linux_androideabi("armv7a-linux-androideabi21-clang")
         aarch64_linux_android("aarch64-linux-android21-clang")
@@ -48,7 +49,7 @@ Here, you define the architectures you want to target when compiling your Rust c
 
 You can find the available linkers in this directory:
 ```
-/Users/SomeUser/Library/Android/sdk/ndk/<ndkVersion>/toolchains/llvm/prebuilt/<prebuilt>/bin/
+/Users/<SomeUser>/Library/Android/sdk/ndk/<ndkVersion>/toolchains/llvm/prebuilt/<prebuilt>/bin/
 ```
 *The `<prebuilt>` folder will correspond to your OS, such as: linux-x86_64, linux-arm64, windows-x86_64, or darwin-x86_64.*
 
@@ -72,6 +73,7 @@ Inform the plugin which Kotlin/Java class will load the Rust library.
 
 ```kotlin
 rustJni{
+    ndkVersion = "25.2.9519653"
     jniHost = "com.devfigas.rustjni.sample.MainActivity"
     architectures {
         armv7_linux_androideabi("armv7a-linux-androideabi21-clang")
@@ -127,17 +129,18 @@ Check your console log for something like this:
 
 **local.properties**
 ```
-/Users/SomeUser/Library/Android/sdk/ndk/<ndkVersion>/toolchains/llvm/prebuilt/<prebuilt>/bin/
+ndk.dir = /Users/<SomeUser>/Library/Android/sdk/ndk/
 ```
 **build.gradle.kts** (module level)
 ```kotlin
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("io.github.andrefigas.rustjni") version "0.0.13"
+    id("io.github.andrefigas.rustjni") version "0.0.14"
 }
 
 rustJni{
+    ndkVersion = "25.2.9519653"
     jniHost = "com.devfigas.rustjni.sample.MainActivity"
     architectures {
         armv7_linux_androideabi("armv7a-linux-androideabi21-clang")
