@@ -17,8 +17,14 @@ This will require some investigation and testing.*
 ### Define NDK Location
 
 Set the NDK location in the `local.properties` file. It should look like this, but with your own path and NDK version:
+
+macOS
 ```properties
 ndk.dir=/Users/<SomeUser>/Library/Android/sdk/ndk
+```
+windows
+```properties
+ndk.dir=C\:\\<SomeUser>\\Administrator\\AppData\\Local\\Android\\Sdk\\ndk
 ```
 
 ### Import Plugin
@@ -123,69 +129,4 @@ Check your console log for something like this:
  _________________________________________________________
  Do your rust implementation there: /rust/src/rust_jni.rs
  ---------------------------------------------------------
-```
-
-### Recap
-
-**local.properties**
-```
-ndk.dir = /Users/<SomeUser>/Library/Android/sdk/ndk/
-```
-**build.gradle.kts** (module level)
-```kotlin
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("io.github.andrefigas.rustjni") version "0.0.14"
-}
-
-rustJni{
-    ndkVersion = "25.2.9519653"
-    jniHost = "com.devfigas.rustjni.sample.MainActivity"
-    architectures {
-        armv7_linux_androideabi("armv7a-linux-androideabi21-clang")
-        aarch64_linux_android("aarch64-linux-android21-clang")
-        i686_linux_android("i686-linux-android21-clang")
-        x86_64_linux_android("x86_64-linux-android21-clang")
-    }
-}
-
-android {
-    namespace = "com.devfigas.rustjni.sample"
-    compileSdk = 34
-
-    defaultConfig {
-        applicationId = "com.devfigas.rustjni.sample"
-        minSdk = 21
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
-dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-}
 ```
