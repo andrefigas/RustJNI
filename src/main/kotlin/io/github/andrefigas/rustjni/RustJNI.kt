@@ -73,6 +73,7 @@ class RustJNI : Plugin<Project> {
             }
 
             doLast {
+                generateConfigToml(project, extension)
                 compileRustCode(project, extension)
                 copyCompiledLibraries(project, extension)
                 reconfigureNativeMethods(project, extension)
@@ -251,8 +252,7 @@ class RustJNI : Plugin<Project> {
     private fun generateConfigToml(project: Project, extension: RustJniExtension) {
         val configToml = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}.cargo${File.separator}config.toml")
         if (configToml.exists()) {
-            println("The file 'config.toml' already exists. Skipping generation.")
-            return
+            configToml.delete()
         }
         val prebuiltPath = getPrebuiltPath(project, extension)
         configToml.parentFile.mkdirs()
@@ -263,8 +263,22 @@ class RustJNI : Plugin<Project> {
     private fun getPrebuiltPath(project: Project, extension: RustJniExtension): String {
         val props = Properties()
         project.file("${project.rootProject.projectDir}${File.separator}local.properties").inputStream().use { props.load(it) }
-        val ndkDir = props.getProperty("ndk.dir")
+        var ndkDir = props.getProperty("ndk.dir")
             ?: throw org.gradle.api.GradleException("ndk.dir not defined in local.properties")
+
+        if(!ndkDir.endsWith(File.separator)){
+            ndkDir += File.separator
+        }
+
+        if(extension.ndkVersion.isEmpty()){
+            throw org.gradle.api.GradleException("define ndkVersion in rustJni extension")
+        }
+
+        ndkDir += extension.ndkVersion
+
+        if(!File(ndkDir).exists()){
+            throw org.gradle.api.GradleException("NDK ${extension.ndkVersion} is not available in the path: $ndkDir")
+        }
 
         val osName = System.getProperty("os.name").toLowerCase()
         val defaultPrebuilt = when {
@@ -301,6 +315,9 @@ class RustJNI : Plugin<Project> {
         val prebuiltPath = OSHelper.doubleSeparatorIfNeeded(prebuiltPath)
 
         return buildString {
+            appendLine("#<RustJNI>")
+            appendLine("#auto-generated code")
+            appendLine()
             architectures.forEach { archConfig ->
                 val linker = OSHelper.addLinkerExtensionIfNeeded(archConfig.linker)
                 appendLine("[target.${archConfig.target}]")
@@ -308,6 +325,7 @@ class RustJNI : Plugin<Project> {
                 appendLine("""linker = "${prebuiltPath}${linker}"""")
                 appendLine()
             }
+            appendLine("#</RustJNI>")
         }
     }
 }
