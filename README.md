@@ -9,23 +9,10 @@ Although Android Studio does not offer robust support for Rust, this plugin prov
 | [Rust](https://www.rust-lang.org/learn/get-started) | 1.79.0       |
 | NDK (Tools -> SDK Manager -> SDK Tools -> NDK)      |              |
 
-*There are plans to lower certain version requirements.<br/>
+*There are plans to lower certain version requirements. 
 This will require some investigation and testing.*
 
 ## Setup
-
-### Define NDK Location
-
-Set the NDK location in the `local.properties` file. It should look like this, but with your own path and NDK version:
-
-macOS
-```properties
-ndk.dir=/Users/<SomeUser>/Library/Android/sdk/ndk
-```
-windows
-```properties
-ndk.dir=C\:\\<SomeUser>\\Administrator\\AppData\\Local\\Android\\Sdk\\ndk
-```
 
 ### Import Plugin
 
@@ -33,7 +20,7 @@ ndk.dir=C\:\\<SomeUser>\\Administrator\\AppData\\Local\\Android\\Sdk\\ndk
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.14"
+    id("io.github.andrefigas.rustjni") version "0.0.15"
 }
 ```
 
@@ -55,7 +42,7 @@ Here, you define the architectures you want to target when compiling your Rust c
 
 You can find the available linkers in this directory:
 ```
-/Users/<SomeUser>/Library/Android/sdk/ndk/<ndkVersion>/toolchains/llvm/prebuilt/<prebuilt>/bin/
+<ndk.dir>/<ndkVersion>/toolchains/llvm/prebuilt/<prebuilt>/bin/
 ```
 *The `<prebuilt>` folder will correspond to your OS, such as: linux-x86_64, linux-arm64, windows-x86_64, or darwin-x86_64.*
 

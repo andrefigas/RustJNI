@@ -239,7 +239,7 @@ class RustJNI : Plugin<Project> {
                       '_   -   _'
                       / '-----' \\
             _________________________________________________________
-            Do your rust implementation there: ${File.separator}rust${File.separator}src${File.separator}rust_jni.rs
+            Do your rust implementation there: /rust/src/rust_jni.rs
             ---------------------------------------------------------"#;
 
                 env.new_string(output)
@@ -263,20 +263,33 @@ class RustJNI : Plugin<Project> {
     private fun getPrebuiltPath(project: Project, extension: RustJniExtension): String {
         val props = Properties()
         project.file("${project.rootProject.projectDir}${File.separator}local.properties").inputStream().use { props.load(it) }
-        var ndkDir = props.getProperty("ndk.dir")
-            ?: throw org.gradle.api.GradleException("ndk.dir not defined in local.properties")
 
-        if(!ndkDir.endsWith(File.separator)){
+        var ndkDir = props.getProperty("ndk.dir")
+
+        // If ndk.dir is not present, try using sdk.dir and adding "/ndk"
+        if (ndkDir == null) {
+            val sdkDir = props.getProperty("sdk.dir")
+                ?: throw org.gradle.api.GradleException("Neither ndk.dir not defined in local.properties")
+
+            ndkDir = "$sdkDir${File.separator}ndk"
+
+            // Check if the NDK directory exists inside the SDK
+            if (!File(ndkDir).exists()) {
+                throw org.gradle.api.GradleException("ndk.dir not defined and no NDK directory found at: $ndkDir")
+            }
+        }
+
+        if (!ndkDir.endsWith(File.separator)) {
             ndkDir += File.separator
         }
 
-        if(extension.ndkVersion.isEmpty()){
+        if (extension.ndkVersion.isEmpty()) {
             throw org.gradle.api.GradleException("define ndkVersion in rustJni extension")
         }
 
         ndkDir += extension.ndkVersion
 
-        if(!File(ndkDir).exists()){
+        if (!File(ndkDir).exists()) {
             throw org.gradle.api.GradleException("NDK ${extension.ndkVersion} is not available in the path: $ndkDir")
         }
 
