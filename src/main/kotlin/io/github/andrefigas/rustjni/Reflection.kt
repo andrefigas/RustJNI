@@ -13,9 +13,9 @@ internal data class MethodSignature(
 internal object Reflection {
 
     internal fun addNativeMethodDeclaration(project: Project, extension: RustJniExtension) {
-        val jniHost = extension.jniHost.trim()
-
         if (!extension.exportFunctions) return
+
+        val jniHost = extension.jniHost.trim()
 
         val className = extractClassName(jniHost)
         val packagePath = extractPackagePath(jniHost)
@@ -260,9 +260,9 @@ internal object Reflection {
     }
 
     internal fun removeNativeMethodDeclaration(project: Project, extension: RustJniExtension) {
-        val jniHost = extension.jniHost.trim()
-
         if (!extension.exportFunctions) return
+
+        val jniHost = extension.jniHost.trim()
 
         val className = extractClassName(jniHost)
         val packagePath = extractPackagePath(jniHost)

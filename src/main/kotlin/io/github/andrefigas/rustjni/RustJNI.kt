@@ -220,7 +220,7 @@ private class Helper(
     private fun configRustLib() {
         val rustSrcDir = File(rustDir, "src")
         deleteMainRsFile(rustSrcDir)
-        createRustJNIFile(rustSrcDir, extension.jniHost)
+        createRustJNIFile(rustSrcDir)
     }
 
     private fun deleteMainRsFile(rustSrcDir: File) {
@@ -232,14 +232,14 @@ private class Helper(
         }
     }
 
-    private fun createRustJNIFile(rustSrcDir: File, jniHost: String) {
+    private fun createRustJNIFile(rustSrcDir: File) {
         val libFile = File(rustSrcDir, "rust_jni.rs")
-        libFile.writeText(buildRustJNIContent(jniHost))
+        libFile.writeText(buildRustJNIContent())
         println("Updated 'rust_jni.rs' with the new content.")
     }
 
-    private fun buildRustJNIContent(jniHost: String): String {
-        val javaClassPath = jniHost.replace('.', '_')
+    private fun buildRustJNIContent(): String {
+        val javaClassPath = extension.jniHost.replace('.', '_')
         return """
             use jni::JNIEnv;
             use jni::objects::JClass;
@@ -303,18 +303,27 @@ private class Helper(
             }
         }
 
-        if (!ndkDir.endsWith(SEP)) {
-            ndkDir += SEP
-        }
+        val ndkVersion = if (extension.ndkVersion.isEmpty()) {
+            // Infer NDK version by selecting a single directory in {sdk.dir}/ndk/
+            val versions = File(ndkDir).listFiles()
+                // NDK versions are directories
+                ?.filter { it.isDirectory }
+                // Only care about the directory names
+                ?.map { it.name }
+                // Put the latest version first
+                ?.sortedDescending()
+                ?: throw org.gradle.api.GradleException("NDK dir \"$ndkDir\" does not exist. Try installing the NDK")
 
-        if (extension.ndkVersion.isEmpty()) {
-            throw org.gradle.api.GradleException("define ndkVersion in rustJni extension")
-        }
-
-        ndkDir += extension.ndkVersion
-
-        if (!File(ndkDir).exists()) {
-            throw org.gradle.api.GradleException("NDK ${extension.ndkVersion} is not available in the path: $ndkDir")
+            // Select the latest version found in the ndkDir
+            versions.getOrNull(0)
+                ?: throw org.gradle.api.GradleException("NDK dir \"$ndkDir\" is empty. Try reinstalling the NDK")
+        } else {
+            // Use the NDK version provided by the user
+            // Check that the provided version exists
+            if (!File(ndkDir, extension.ndkVersion).exists()) {
+                throw org.gradle.api.GradleException("NDK ${extension.ndkVersion} is not available in the path: $ndkDir")
+            }
+            extension.ndkVersion
         }
 
         val osName = System.getProperty("os.name").toLowerCase()
@@ -341,7 +350,7 @@ private class Helper(
                 println("No 'prebuilt' specified. Using default for OS: $defaultPrebuilt")
                 defaultPrebuilt
             }
-        }.let { prebuilt -> "$ndkDir${SEP}toolchains${SEP}llvm${SEP}prebuilt${SEP}$prebuilt${SEP}bin${SEP}" }
+        }.let { prebuilt -> "$ndkDir$SEP$ndkVersion${SEP}toolchains${SEP}llvm${SEP}prebuilt${SEP}$prebuilt${SEP}bin${SEP}" }
     }
 
     private fun buildConfigTomlContent(prebuiltPath: String): String {
