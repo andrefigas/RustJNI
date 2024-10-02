@@ -5,160 +5,56 @@ import org.gradle.api.Project
 import java.io.File
 import java.util.Properties
 
+/** Path component separator. `/` on unix and `\` on windows. */
+val SEP: String = File.separator
+
+private const val RUST_JNI_COMPILE = "rust-jni-compile"
+
+@Suppress("unused")
 class RustJNI : Plugin<Project> {
-
-    private companion object{
-        const val RUST_JNI_COMPILE = "rust-jni-compile"
-    }
-
     override fun apply(project: Project) {
         val extension = project.extensions.create("rustJni", RustJniExtension::class.java)
 
-        if(extension.applyAsCompileDependency){
+        if (extension.applyAsCompileDependency) {
             project.tasks.matching { it.name.startsWith("compile") }.configureEach {
                 this.dependsOn(RUST_JNI_COMPILE)
             }
         }
 
-        registerCompileTask(project, extension)
-        registerInitTask(project, extension)
-        configureAndroidSettings(project, extension)
+        val helper = Helper(project, extension)
+
+        helper.registerCompileTask()
+        helper.registerInitTask()
+        helper.configureAndroidSettings()
     }
+}
 
-    private fun configureAndroidSettings(project: Project, extension: RustJniExtension) {
-        AndroidSettings.configureAndroidSourceSets(project, extension)
-        AndroidSettings.configureNdkAbiFilters(project, extension)
-    }
-
-    private fun initializeRustProject(project: Project, extension: RustJniExtension) {
-        if (rustDirExists(project)) {
-            println("The directory 'rust' already exists. Skipping initialization.")
-            return
-        }
-        createNewRustProject(project)
-        configureRustEnvironment(project, extension)
-    }
-
-    private fun rustDirExists(project: Project) = project.file("${project.rootProject.projectDir}${File.separator}rust").exists()
-
-    private fun createNewRustProject(project: Project) {
-        project.exec {
-            workingDir = project.rootProject.projectDir
-            commandLine = listOf("cargo", "new", "rust")
-        }
-    }
-
-    private fun configureRustEnvironment(project: Project, extension: RustJniExtension) {
-        configCargo(project, extension)
-        configRustLib(project, extension)
-        generateConfigToml(project, extension)
-        reconfigureNativeMethods(project, extension)
-    }
-
-    private fun reconfigureNativeMethods(project: Project, extension: RustJniExtension) {
-        Reflection.removeNativeMethodDeclaration(project, extension)
-        Reflection.addNativeMethodDeclaration(project, extension)
-    }
-
-    private fun registerCompileTask(project: Project, extension: RustJniExtension) {
+private class Helper(
+    private val project: Project,
+    private val extension: RustJniExtension,
+) {
+    fun registerCompileTask() {
         project.tasks.register(RUST_JNI_COMPILE) {
             group = "build"
             description = "Compiles Rust code for specified architectures"
 
             doFirst {
-                if (!rustDirExists(project)) {
+                if (!rustDir.exists()) {
                     println("Rust directory not found. Initializing Rust project...")
-                    initializeRustProject(project, extension)
+                    initializeRustProject()
                 }
             }
 
             doLast {
-                generateConfigToml(project, extension)
-                compileRustCode(project, extension)
-                copyCompiledLibraries(project, extension)
-                reconfigureNativeMethods(project, extension)
+                generateConfigToml()
+                compileRustCode()
+                copyCompiledLibraries()
+                reconfigureNativeMethods()
             }
         }
     }
 
-    private fun compileRustCode(project: Project, extension: RustJniExtension) {
-        val rustDir = project.file("${project.rootProject.projectDir}${File.separator}rust")
-        validateArchitectures(extension)
-        addRustTargets(project, rustDir, extension.architecturesList)
-        cleanBuildDirectory(rustDir)
-        buildRustForArchitectures(project, rustDir, extension.architecturesList)
-    }
-
-    private fun validateArchitectures(extension: RustJniExtension) {
-        if (extension.architecturesList.isEmpty()) {
-            throw org.gradle.api.GradleException("No architectures specified in rustJni extension")
-        }
-    }
-
-    private fun addRustTargets(project: Project, rustDir: File, architectures: List<ArchitectureConfig>) {
-        architectures.forEach { archConfig ->
-            project.exec {
-                workingDir = rustDir
-                commandLine = listOf("rustup", "--verbose", "target", "add", archConfig.target)
-            }
-        }
-    }
-
-    private fun cleanBuildDirectory(rustDir: File) {
-        val buildDir = File(rustDir, "build")
-        if (buildDir.exists()) {
-            buildDir.deleteRecursively()
-        }
-    }
-
-    private fun buildRustForArchitectures(project: Project, rustDir: File, architectures: List<ArchitectureConfig>) {
-        architectures.forEach { archConfig ->
-            project.exec {
-                workingDir = rustDir
-                commandLine = listOf("cargo", "build", "--target", archConfig.target, "--release", "--verbose")
-            }
-        }
-    }
-
-    private fun copyCompiledLibraries(project: Project, extension: RustJniExtension) {
-        val rustDir = project.file("${project.rootProject.projectDir}${File.separator}rust")
-        val libName = extension.libName
-        val architectures = extension.architecturesList
-
-        architectures.forEach { archConfig ->
-            val outputDir = createOutputDirForArchitecture(rustDir, archConfig)
-            val fileExtension = getFileExtensionForTarget(archConfig.target)
-            val sourceLib = File(rustDir, "target${File.separator}${archConfig.target}${File.separator}release${File.separator}lib${libName}$fileExtension")
-            val destLib = File(outputDir, "lib${libName}$fileExtension")
-            copyLibraryFile(sourceLib, destLib)
-        }
-    }
-
-    private fun createOutputDirForArchitecture(rustDir: File, archConfig: ArchitectureConfig): File {
-        val outputDirName = when (archConfig.target) {
-            AndroidTarget.ARMV7_LINUX_ANDROIDEABI -> "armeabi-v7a"
-            AndroidTarget.AARCH64_LINUX_ANDROID -> "arm64-v8a"
-            AndroidTarget.I686_LINUX_ANDROID -> "x86"
-            AndroidTarget.X86_64_LINUX_ANDROID -> "x86_64"
-            "aarch64-apple-ios" -> "ios-arm64"
-            else -> archConfig.target.replace('-', '_')
-        }
-        val outputDir = File(rustDir, "build${File.separator}$outputDirName")
-        outputDir.mkdirs()
-        return outputDir
-    }
-
-    private fun getFileExtensionForTarget(target: String) = if (target.contains("apple-ios")) ".dylib" else ".so"
-
-    private fun copyLibraryFile(sourceLib: File, destLib: File) {
-        if (sourceLib.exists()) {
-            sourceLib.copyTo(destLib, overwrite = true)
-        } else {
-            throw org.gradle.api.GradleException("Compiled library not found: ${sourceLib.absolutePath}")
-        }
-    }
-
-    private fun registerInitTask(project: Project, extension: RustJniExtension) {
+    fun registerInitTask() {
         project.tasks.register("rust-jni-init") {
             group = "setup"
             description = "Initializes the Rust project"
@@ -168,18 +64,144 @@ class RustJNI : Plugin<Project> {
             }
 
             doLast {
-                initializeRustProject(project, extension)
+                initializeRustProject()
             }
         }
     }
 
-    private fun configCargo(project: Project, extension: RustJniExtension) {
-        val configToml = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}Cargo.toml")
-        configToml.writeText(buildCargoConfig(extension))
+    fun configureAndroidSettings() {
+        AndroidSettings.configureAndroidSourceSets(project, extension)
+        AndroidSettings.configureNdkAbiFilters(project, extension)
+    }
+
+    /** The directory where the rust project lives. See [RustJniExtension.rustPath]. */
+    private val rustDir =
+        project.file("${project.rootProject.projectDir}${SEP}${extension.rustPath}")
+
+    private fun initializeRustProject() {
+        if (rustDir.exists()) {
+            println("The directory 'rust' already exists. Skipping initialization.")
+            return
+        }
+        createNewRustProject()
+        configureRustEnvironment()
+    }
+
+    private fun createNewRustProject() {
+        project.exec {
+            workingDir = rustDir.parentFile
+            commandLine = listOf("cargo", "new", "--lib", "rust", "--vcs", "none")
+        }
+    }
+
+    private fun configureRustEnvironment() {
+        configCargo()
+        configRustLib()
+        generateConfigToml()
+        reconfigureNativeMethods()
+    }
+
+    private fun reconfigureNativeMethods() {
+        Reflection.removeNativeMethodDeclaration(project, extension)
+        Reflection.addNativeMethodDeclaration(project, extension)
+    }
+
+    private fun compileRustCode() {
+        validateArchitectures()
+        addRustTargets(extension.architecturesList)
+        cleanBuildDirectory()
+        buildRustForArchitectures(project, extension.architecturesList)
+    }
+
+    private fun validateArchitectures() {
+        if (extension.architecturesList.isEmpty()) {
+            throw org.gradle.api.GradleException("No architectures specified in rustJni extension")
+        }
+    }
+
+    private fun addRustTargets(architectures: List<ArchitectureConfig>) {
+        architectures.forEach { archConfig ->
+            project.exec {
+                workingDir = rustDir
+                commandLine = listOf("rustup", "--verbose", "target", "add", archConfig.target)
+            }
+        }
+    }
+
+    private fun cleanBuildDirectory() {
+        val buildDir = File(rustDir, "build")
+        if (buildDir.exists()) {
+            buildDir.deleteRecursively()
+        }
+    }
+
+    private fun buildRustForArchitectures(
+        project: Project,
+        architectures: List<ArchitectureConfig>
+    ) {
+        architectures.forEach { archConfig ->
+            project.exec {
+                workingDir = rustDir
+                commandLine = listOf(
+                    "cargo",
+                    "build",
+                    "--target",
+                    archConfig.target,
+                    "--release",
+                    "--verbose"
+                )
+            }
+        }
+    }
+
+    private fun copyCompiledLibraries() {
+        val libName = extension.libName
+        val architectures = extension.architecturesList
+
+        architectures.forEach { archConfig ->
+            val outputDir = createOutputDirForArchitecture(archConfig)
+            val fileExtension = getFileExtensionForTarget(archConfig.target)
+            val sourceLib = File(
+                rustDir,
+                "target${SEP}${archConfig.target}${SEP}release${SEP}lib${libName}$fileExtension"
+            )
+            val destLib = File(outputDir, "lib${libName}$fileExtension")
+            copyLibraryFile(sourceLib, destLib)
+        }
+    }
+
+    private fun createOutputDirForArchitecture(archConfig: ArchitectureConfig): File {
+        val outputDirName = when (archConfig.target) {
+            AndroidTarget.ARMV7_LINUX_ANDROIDEABI -> "armeabi-v7a"
+            AndroidTarget.AARCH64_LINUX_ANDROID -> "arm64-v8a"
+            AndroidTarget.I686_LINUX_ANDROID -> "x86"
+            AndroidTarget.X86_64_LINUX_ANDROID -> "x86_64"
+            "aarch64-apple-ios" -> "ios-arm64"
+            else -> archConfig.target.replace('-', '_')
+        }
+        val outputDir = File(rustDir, "build${SEP}$outputDirName")
+        outputDir.mkdirs()
+        return outputDir
+    }
+
+    private fun getFileExtensionForTarget(target: String) =
+        if (target.contains("apple-ios")) ".dylib" else ".so"
+
+    private fun copyLibraryFile(sourceLib: File, destLib: File) {
+        if (sourceLib.exists()) {
+            sourceLib.copyTo(destLib, overwrite = true)
+        } else {
+            throw org.gradle.api.GradleException("Compiled library not found: ${sourceLib.absolutePath}")
+        }
+    }
+
+    private fun configCargo() {
+        val configToml = File(rustDir, "Cargo.toml")
+        configToml.writeText(buildCargoConfig())
         println("Cargo.toml updated")
     }
 
-    private fun buildCargoConfig(extension: RustJniExtension): String {
+    private fun buildCargoConfig(): String {
         return """
             [package]
             name = "${extension.libName}"
@@ -195,8 +217,8 @@ class RustJNI : Plugin<Project> {
         """.trimIndent()
     }
 
-    private fun configRustLib(project: Project, extension: RustJniExtension) {
-        val rustSrcDir = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}src")
+    private fun configRustLib() {
+        val rustSrcDir = File(rustDir, "src")
         deleteMainRsFile(rustSrcDir)
         createRustJNIFile(rustSrcDir, extension.jniHost)
     }
@@ -249,20 +271,22 @@ class RustJNI : Plugin<Project> {
         """.trimIndent()
     }
 
-    private fun generateConfigToml(project: Project, extension: RustJniExtension) {
-        val configToml = project.file("${project.rootProject.projectDir}${File.separator}rust${File.separator}.cargo${File.separator}config.toml")
+    private fun generateConfigToml() {
+        val configToml = File(rustDir, ".cargo${SEP}config.toml")
         if (configToml.exists()) {
             configToml.delete()
         }
-        val prebuiltPath = getPrebuiltPath(project, extension)
+        val prebuiltPath = getPrebuiltPath()
         configToml.parentFile.mkdirs()
-        configToml.writeText(buildConfigTomlContent(extension, prebuiltPath))
+        configToml.writeText(buildConfigTomlContent(prebuiltPath))
         println("config.toml generated at: ${configToml.absolutePath}")
     }
 
-    private fun getPrebuiltPath(project: Project, extension: RustJniExtension): String {
+    private fun getPrebuiltPath(): String {
         val props = Properties()
-        project.file("${project.rootProject.projectDir}${File.separator}local.properties").inputStream().use { props.load(it) }
+        project.file("${project.rootProject.projectDir}${SEP}local.properties")
+            .inputStream()
+            .use { props.load(it) }
 
         var ndkDir = props.getProperty("ndk.dir")
 
@@ -271,7 +295,7 @@ class RustJNI : Plugin<Project> {
             val sdkDir = props.getProperty("sdk.dir")
                 ?: throw org.gradle.api.GradleException("Neither ndk.dir not defined in local.properties")
 
-            ndkDir = "$sdkDir${File.separator}ndk"
+            ndkDir = "$sdkDir${SEP}ndk"
 
             // Check if the NDK directory exists inside the SDK
             if (!File(ndkDir).exists()) {
@@ -279,8 +303,8 @@ class RustJNI : Plugin<Project> {
             }
         }
 
-        if (!ndkDir.endsWith(File.separator)) {
-            ndkDir += File.separator
+        if (!ndkDir.endsWith(SEP)) {
+            ndkDir += SEP
         }
 
         if (extension.ndkVersion.isEmpty()) {
@@ -311,21 +335,22 @@ class RustJNI : Plugin<Project> {
                 }
                 localPrebuilt
             }
+
             extensionPrebuilt.isNotEmpty() -> extensionPrebuilt
             else -> {
                 println("No 'prebuilt' specified. Using default for OS: $defaultPrebuilt")
                 defaultPrebuilt
             }
-        }.let { prebuilt -> "$ndkDir${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuilt${File.separator}bin${File.separator}" }
+        }.let { prebuilt -> "$ndkDir${SEP}toolchains${SEP}llvm${SEP}prebuilt${SEP}$prebuilt${SEP}bin${SEP}" }
     }
 
-    private fun buildConfigTomlContent(extension: RustJniExtension, prebuiltPath: String): String {
+    private fun buildConfigTomlContent(prebuiltPath: String): String {
+        @Suppress("NAME_SHADOWING")
+        val prebuiltPath = OSHelper.doubleSeparatorIfNeeded(prebuiltPath)
         val architectures = extension.architecturesList
         if (architectures.isEmpty()) {
             throw org.gradle.api.GradleException("No architectures specified in rustJni extension")
         }
-
-        val prebuiltPath = OSHelper.doubleSeparatorIfNeeded(prebuiltPath)
 
         return buildString {
             appendLine("#<RustJNI>")

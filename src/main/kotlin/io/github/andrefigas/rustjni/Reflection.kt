@@ -4,14 +4,18 @@ import org.gradle.api.Project
 import java.io.File
 
 // Data class to represent method signature
-internal data class MethodSignature(val methodName: String, val returnType: String, val parameters: List<String>)
+internal data class MethodSignature(
+    val methodName: String,
+    val returnType: String,
+    val parameters: List<String>
+)
 
 internal object Reflection {
 
     internal fun addNativeMethodDeclaration(project: Project, extension: RustJniExtension) {
         val jniHost = extension.jniHost.trim()
 
-        if (shouldSkipAddingMethods(jniHost, extension)) return
+        if (!extension.exportFunctions) return
 
         val className = extractClassName(jniHost)
         val packagePath = extractPackagePath(jniHost)
@@ -29,10 +33,6 @@ internal object Reflection {
         classFile.writeText(newFileContent)
 
         println("Added native method declarations and library loading to ${classFile.absolutePath}")
-    }
-
-    private fun shouldSkipAddingMethods(jniHost: String, extension: RustJniExtension): Boolean {
-        return jniHost == RustJniExtension.defaultJniHost || !extension.exportFunctions
     }
 
     private fun extractClassName(jniHost: String): String {
@@ -66,9 +66,15 @@ internal object Reflection {
         }
     }
 
-    private fun insertGeneratedCode(fileContent: String, codeToInsert: String, className: String): String {
-        val classPattern = Regex("(class|object|public\\s+class|final\\s+class|open\\s+class)\\s+$className\\b[^\\{]*\\{")
-        val matchResult = classPattern.find(fileContent) ?: throw org.gradle.api.GradleException("Could not find class definition for $className")
+    private fun insertGeneratedCode(
+        fileContent: String,
+        codeToInsert: String,
+        className: String
+    ): String {
+        val classPattern =
+            Regex("(class|object|public\\s+class|final\\s+class|open\\s+class)\\s+$className\\b[^\\{]*\\{")
+        val matchResult = classPattern.find(fileContent)
+            ?: throw org.gradle.api.GradleException("Could not find class definition for $className")
 
         val insertionPoint = matchResult.range.last + 1
         val (beforeInsertion, afterInsertion) = fileContent.splitAt(insertionPoint)
@@ -142,7 +148,8 @@ internal object Reflection {
     }
 
     private fun readRustJniFile(project: Project): String {
-        val rustLibFile = File(project.rootDir, "rust${File.separator}src${File.separator}rust_jni.rs")
+        val rustLibFile =
+            File(project.rootDir, "rust${File.separator}src${File.separator}rust_jni.rs")
         if (!rustLibFile.exists()) {
             throw org.gradle.api.GradleException("Could not find 'rust_jni.rs' file at ${rustLibFile.absolutePath}")
         }
@@ -156,7 +163,8 @@ internal object Reflection {
     ): MethodSignature? {
         val jniFunctionName = functionMatch.groupValues[1]
         val paramsString = functionMatch.groupValues[2]
-        val returnTypeString = functionMatch.groupValues[3]?.removePrefix("->")?.trim() ?: "void"
+        val returnTypeString =
+            functionMatch.groupValues.getOrNull(3)?.removePrefix("->")?.trim() ?: "void"
 
         val classNameFromRust = extractClassNameFromRust(jniFunctionName)
 
@@ -206,13 +214,21 @@ internal object Reflection {
     ): String {
         val methodDeclarations = methodsToGenerate.joinToString("\n\n") { method ->
             if (isKotlinFile) {
-                "private external fun ${method.methodName.substringAfterLast('_')}(${method.parameters.joinToString(", ")}): ${method.returnType}"
+                "private external fun ${method.methodName.substringAfterLast('_')}(${
+                    method.parameters.joinToString(
+                        ", "
+                    )
+                }): ${method.returnType}"
             } else {
                 val paramsJava = method.parameters.joinToString(", ") { param ->
                     val parts = param.split(":")
                     "${parts[1].trim()} ${parts[0].trim()}"
                 }
-                "private static native ${method.returnType} ${method.methodName.substringAfterLast('_')}($paramsJava);"
+                "private static native ${method.returnType} ${
+                    method.methodName.substringAfterLast(
+                        '_'
+                    )
+                }($paramsJava);"
             }
         }
 
@@ -246,7 +262,7 @@ internal object Reflection {
     internal fun removeNativeMethodDeclaration(project: Project, extension: RustJniExtension) {
         val jniHost = extension.jniHost.trim()
 
-        if (shouldSkipAddingMethods(jniHost, extension)) return
+        if (!extension.exportFunctions) return
 
         val className = extractClassName(jniHost)
         val packagePath = extractPackagePath(jniHost)
