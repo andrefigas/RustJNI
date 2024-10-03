@@ -16,6 +16,10 @@ open class RustJniExtension {
 
     companion object {
         internal const val defaultJniHost = "com.yourpackage.YorClass"
+
+        fun shouldSkipAddingMethods(jniHost: String, extension: RustJniExtension): Boolean {
+            return jniHost == RustJniExtension.defaultJniHost || !extension.exportFunctions
+        }
     }
 
     private var architectures: (ArchitectureListScope.() -> Unit)? = null

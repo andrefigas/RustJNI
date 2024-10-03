@@ -1,5 +1,7 @@
 package io.github.andrefigas.rustjni
 
+import io.github.andrefigas.rustjni.reflection.ReflectionJVM
+import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
@@ -52,12 +54,7 @@ class RustJNI : Plugin<Project> {
         configCargo(project, extension)
         configRustLib(project, extension)
         generateConfigToml(project, extension)
-        reconfigureNativeMethods(project, extension)
-    }
-
-    private fun reconfigureNativeMethods(project: Project, extension: RustJniExtension) {
-        Reflection.removeNativeMethodDeclaration(project, extension)
-        Reflection.addNativeMethodDeclaration(project, extension)
+        ReflectionJVM.update(project, extension)
     }
 
     private fun registerCompileTask(project: Project, extension: RustJniExtension) {
@@ -74,9 +71,10 @@ class RustJNI : Plugin<Project> {
 
             doLast {
                 generateConfigToml(project, extension)
+                ReflectionNative.update(project, extension)
                 compileRustCode(project, extension)
                 copyCompiledLibraries(project, extension)
-                reconfigureNativeMethods(project, extension)
+                ReflectionJVM.update(project, extension)
             }
         }
     }
@@ -221,7 +219,10 @@ class RustJNI : Plugin<Project> {
         return """
             use jni::JNIEnv;
             use jni::objects::JClass;
+            //<RustJNI>
+            // primitive imports
             use jni::sys::{jstring};
+            //</RustJNI>
 
             #[no_mangle]
             pub extern "C" fn Java_${javaClassPath}_sayHello(

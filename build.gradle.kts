@@ -9,7 +9,7 @@ repositories {
     google()
 }
 
-version = "0.0.15"
+version = "0.0.16"
 group = "io.github.andrefigas.rustjni"
 
 gradlePlugin {
