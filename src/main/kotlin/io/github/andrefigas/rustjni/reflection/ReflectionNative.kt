@@ -4,6 +4,7 @@ import io.github.andrefigas.rustjni.RustJniExtension
 import io.github.andrefigas.rustjni.reflection.primitive.PrimitiveJVM
 import io.github.andrefigas.rustjni.reflection.primitive.PrimitiveRust
 import io.github.andrefigas.rustjni.utils.FileUtils
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import java.io.File
 
@@ -52,7 +53,7 @@ internal object ReflectionNative {
 
         val rustMethodSignatures = parseRustJniFunctions(project, jniHost, isKotlinFile)
 
-        compareMethodSignatures(kotlinMethodSignatures, rustMethodSignatures).forEach { methodSignature ->
+        compareMethodSignatures(kotlinMethodSignatures, rustMethodSignatures, isKotlinFile).forEach { methodSignature ->
             updateRustFileIfMethodNotExists(
                 project,
                 extension,
@@ -167,16 +168,31 @@ internal object ReflectionNative {
     }
 
     // Compares method signatures between Kotlin/Java and Rust
-    private fun compareMethodSignatures(kotlin: List<MethodSignature>, rust: List<MethodSignature>): List<MethodSignature> {
+    private fun compareMethodSignatures(kotlin: List<MethodSignature>, rust: List<MethodSignature>, isKotlin: Boolean): List<MethodSignature> {
         val rustSignatures = rust.map {
             MethodSignature(it.methodName.substringAfterLast('_'), it.returnType, it.parameters)
         }
 
+        val delimiter = if (isKotlin) ":" else " "
         return kotlin.filterNot { kotlinMethod ->
             rustSignatures.any { rustMethod ->
-                kotlinMethod.methodName == rustMethod.methodName &&
-                        kotlinMethod.parameters.map { it.substringAfter(":").trim().toLowerCase() } ==
-                        rustMethod.parameters.map { it.substringAfter(":").trim().toLowerCase() }
+                val jvmParametersType = kotlinMethod.parameters.map {
+                    if (isKotlin) it.substringAfter(delimiter).trim().toLowerCase() else it.substringBefore(delimiter).trim().toLowerCase()
+                }
+
+                val rustParametersType = rustMethod.parameters.map { it.substringAfter(":").trim().toLowerCase()}
+                val match = kotlinMethod.methodName == rustMethod.methodName && jvmParametersType == rustParametersType
+                if(match) {
+                    val kotlinReturnType = mapJVMtoRustType(kotlinMethod.returnType, isKotlin)
+                    val rustReturnType = mapJVMtoRustType(rustMethod.returnType, isKotlin)
+                    if(kotlinReturnType != rustReturnType){
+                        throw GradleException("Method \"${kotlinMethod.methodName}\" is already defined in Rust " +
+                                "with the same signature but a different return type.\n" +
+                                "Check the Rust file: src/rust_jni.rs")
+                    }
+                }
+
+                match
             }
         }
     }

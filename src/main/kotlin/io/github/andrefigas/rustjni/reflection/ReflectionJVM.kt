@@ -1,6 +1,5 @@
 package io.github.andrefigas.rustjni.reflection
 
-import io.github.andrefigas.rustjni.Reflection
 import io.github.andrefigas.rustjni.RustJniExtension
 import io.github.andrefigas.rustjni.reflection.primitive.PrimitiveJVM
 import io.github.andrefigas.rustjni.reflection.primitive.PrimitiveRust
