@@ -243,27 +243,39 @@ internal object ReflectionJVM {
 
     // Extracts method signatures from the class file content (Kotlin/Java)
     fun extractMethodSignaturesFromClass(fileContent: String, isKotlinFile: Boolean): List<MethodSignature> {
+        println("extractMethodSignaturesFromClass content: $fileContent isKotlin: $isKotlinFile")
+
         val methodPattern = if (isKotlinFile) {
-            // Kotlin method pattern
-            Regex("""fun\s+(\w+)\s*\((.*?)\)\s*:\s*(\w+)""")
+            // Kotlin method pattern that captures methods with or without parameters
+            Regex("""fun\s+(\w+)\s*\(([^)]*)\)\s*:\s*(\w+)""")
         } else {
-            // Java method pattern
-            Regex("""\b(?:private|protected|public)?\s*(?:static)?\s*native\s*(\w+)\s+(\w+)\s*\((.*?)\)\s*;""")
+            // Java native method pattern that captures methods with or without parameters
+            Regex("""\b(?:private|protected|public)?\s*(?:static)?\s*native\s+(\w+)\s+(\w+)\s*\(([^)]*)\)\s*;""")
         }
 
         return methodPattern.findAll(fileContent).map { result ->
-            val returnType = if (isKotlinFile) result.groupValues[3] else result.groupValues[1]
-            val methodName = if (isKotlinFile) result.groupValues[1] else result.groupValues[2]
-            val parameters = result.groupValues[3]
+            val (methodName, returnType, parameters) = if (isKotlinFile) {
+                // Kotlin uses groupValues[1] for method name, groupValues[3] for return type, groupValues[2] for parameters
+                Triple(result.groupValues[1], result.groupValues[3], result.groupValues[2].trim())
+            } else {
+                // Java uses groupValues[2] for method name, groupValues[1] for return type, groupValues[3] for parameters
+                Triple(result.groupValues[2], result.groupValues[1], result.groupValues[3].trim())
+            }
 
-            val parameterList = parameters
-                .split(',')
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
+            val parameterList = if (parameters.isNotEmpty()) {
+                parameters
+                    .split(',')
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+            } else {
+                emptyList() // No parameters
+            }
 
             MethodSignature(methodName, returnType, parameterList)
         }.toList()
     }
+
+
 }
 
 // Extension function to split a string at a specified index
