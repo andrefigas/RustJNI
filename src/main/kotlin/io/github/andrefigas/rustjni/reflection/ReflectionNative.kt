@@ -51,11 +51,10 @@ internal object ReflectionNative {
         // Extract method signatures
         val kotlinMethodSignatures = ReflectionJVM.extractMethodSignaturesFromClass(fileContent, isKotlinFile)
 
-        val rustMethodSignatures = parseRustJniFunctions(project, jniHost, isKotlinFile)
+        val rustMethodSignatures = parseRustJniFunctions(extension, jniHost, isKotlinFile)
 
         compareMethodSignatures(kotlinMethodSignatures, rustMethodSignatures, isKotlinFile).forEach { methodSignature ->
             updateRustFileIfMethodNotExists(
-                project,
                 extension,
                 methodSignature.methodName,
                 methodSignature.parameters,
@@ -64,17 +63,17 @@ internal object ReflectionNative {
             )
         }
 
-        val rustFilePath = "${project.rootProject.projectDir}/rust/src/rust_jni.rs"
+        val rustFilePath = "${extension.rustPath}${File.separator}src${File.separator}rust_jni.rs"
         removePrimitiveImports(rustFilePath)
         addPrimitiveImports(rustFilePath)
     }
 
     private fun parseRustJniFunctions(
-        project: Project,
+        extension: RustJniExtension,
         jniHost: String,
         isKotlinFile: Boolean
     ): List<MethodSignature> {
-        val rustLibContent = readRustJniFile(project)
+        val rustLibContent = readRustJniFile(extension)
 
         val jniFunctionPattern = Regex(
             """(?s)#\s*\[\s*no_mangle\s*\]\s*pub\s+extern\s+"C"\s+fn\s+(Java_\w+)\s*\((.*?)\)\s*(->\s*[\w:]+)?\s*\{""",
@@ -159,8 +158,8 @@ internal object ReflectionNative {
         return classNameParts.joinToString(".").replace('_', '.')
     }
 
-    private fun readRustJniFile(project: Project): String {
-        val rustLibFile = File(project.rootDir, "rust${File.separator}src${File.separator}rust_jni.rs")
+    private fun readRustJniFile(extension: RustJniExtension): String {
+        val rustLibFile = File(extension.rustPath, "src${File.separator}rust_jni.rs")
         if (!rustLibFile.exists()) {
             throw org.gradle.api.GradleException("Could not find 'rust_jni.rs' file at ${rustLibFile.absolutePath}")
         }
@@ -199,7 +198,6 @@ internal object ReflectionNative {
 
     // Updates the Rust file if the corresponding method does not exist
     private fun updateRustFileIfMethodNotExists(
-        project: Project,
         extension: RustJniExtension,
         methodName: String,
         parameters: List<String>,
@@ -210,7 +208,7 @@ internal object ReflectionNative {
 
         if (RustJniExtension.shouldSkipAddingMethods(jniHost, extension)) return
 
-        val rustFilePath = "${project.rootProject.projectDir}/rust/src/rust_jni.rs"
+        val rustFilePath = "${extension.rustPath}${File.separator}src${File.separator}rust_jni.rs"
         addMethodToRust(rustFilePath, methodName, parameters, returnType, jniHost, isKotlinFile)
     }
 
@@ -320,7 +318,6 @@ internal object ReflectionNative {
         jniHost: String,
         isKotlin: Boolean,
     ): String {
-        println("Building Rust JNI content for method: $methodName, parameters: $parameters, return type: $returnType")
         val javaClassPath = jniHost.replace('.', '_')
         val delimiter = if (isKotlin) ":" else " "
 

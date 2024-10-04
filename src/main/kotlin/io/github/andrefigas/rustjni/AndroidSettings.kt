@@ -10,8 +10,11 @@ internal object AndroidSettings {
             val androidExtension = project.extensions.findByName("android")
             if (androidExtension is com.android.build.gradle.BaseExtension) {
                 androidExtension.sourceSets.getByName("main").apply {
-                    // Set jniLibs to only point to the Rust build directory
-                    jniLibs.setSrcDirs(listOf("${project.rootDir}${File.separator}rust${File.separator}build"))
+                    val buildRust = File(buildDir, "rust")
+                    val buildSrcList = mutableListOf<String>()
+                    buildSrcList.add(buildRust.toString())
+                    buildSrcList.addAll(jniLibs.srcDirs.map { it.toString() })
+                    jniLibs.setSrcDirs(buildSrcList)
                 }
                 project.logger.lifecycle("Configured jniLibs.srcDirs: ${androidExtension.sourceSets.getByName("main").jniLibs.srcDirs}")
             } else {

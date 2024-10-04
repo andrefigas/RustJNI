@@ -29,7 +29,7 @@ internal object ReflectionJVM {
 
         fileContent = removeExistingRustJniBlockContent(fileContent)
 
-        val codeToInsertWithoutIndent = generateMethodDeclarations(project, extension, isKotlinFile)
+        val codeToInsertWithoutIndent = generateMethodDeclarations(extension, isKotlinFile)
 
         val newFileContent = insertGeneratedCode(fileContent, codeToInsertWithoutIndent, className)
 
@@ -68,12 +68,11 @@ internal object ReflectionJVM {
     }
 
     private fun generateMethodDeclarations(
-        project: Project,
         extension: RustJniExtension,
         isKotlinFile: Boolean
     ): String {
         val jniHost = extension.jniHost.trim()
-        val methodsToGenerate = parseRustJniFunctions(project, jniHost, isKotlinFile)
+        val methodsToGenerate = parseRustJniFunctions(extension, jniHost, isKotlinFile)
 
         if (methodsToGenerate.isEmpty()) {
             throw org.gradle.api.GradleException("No JNI methods found for class $jniHost in rust_jni.rs")
@@ -83,11 +82,11 @@ internal object ReflectionJVM {
     }
 
     private fun parseRustJniFunctions(
-        project: Project,
+        extension: RustJniExtension,
         jniHost: String,
         isKotlinFile: Boolean
     ): List<MethodSignature> {
-        val rustLibContent = readRustJniFile(project)
+        val rustLibContent = readRustJniFile(extension)
 
         val jniFunctionPattern = Regex(
             """(?s)#\s*\[\s*no_mangle\s*\]\s*pub\s+extern\s+"C"\s+fn\s+(Java_\w+)\s*\((.*?)\)\s*(->\s*[\w:]+)?\s*\{""",
@@ -149,8 +148,8 @@ internal object ReflectionJVM {
         return MethodSignature(jniFunctionName, returnType, parameters)
     }
 
-    private fun readRustJniFile(project: Project): String {
-        val rustLibFile = File(project.rootDir, "rust${File.separator}src${File.separator}rust_jni.rs")
+    private fun readRustJniFile(extension : RustJniExtension): String {
+        val rustLibFile = File(extension.rustPath , "src${File.separator}rust_jni.rs")
         if (!rustLibFile.exists()) {
             throw org.gradle.api.GradleException("Could not find 'rust_jni.rs' file at ${rustLibFile.absolutePath}")
         }

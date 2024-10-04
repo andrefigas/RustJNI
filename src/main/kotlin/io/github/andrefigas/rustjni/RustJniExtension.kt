@@ -6,22 +6,46 @@ import io.github.andrefigas.rustjni.AndroidTarget.I686_LINUX_ANDROID
 import io.github.andrefigas.rustjni.AndroidTarget.X86_64_LINUX_ANDROID
 
 open class RustJniExtension {
-    var libName: String = "my_rust_lib"
-    var libVersion: String = "0.1.0"
-    var ndkVersion: String = ""
-    var preBuilt: String = ""
-    var jniHost: String = defaultJniHost
-    var exportFunctions = true
-    var applyAsCompileDependency = true
 
     companion object {
-        internal const val defaultJniHost = "com.yourpackage.YorClass"
+
+        internal const val defaultJniHost = "com.yourpackage.YourClass"
 
         fun shouldSkipAddingMethods(jniHost: String, extension: RustJniExtension): Boolean {
-            return jniHost == RustJniExtension.defaultJniHost || !extension.exportFunctions
+            return jniHost == defaultJniHost || !extension.exportFunctions
         }
     }
 
+    // -- Settings for the user of the plugin
+    /** The *name* of the Rust library. Same value as `package.name` in `Cargo.toml`. */
+    // TODO: default empty, should be parsed from Cargo.toml if it exists
+    var libName = "my_rust_lib"
+    /** The *version* of the Rust library. Same value as `package.version` in `Cargo.toml`.
+     *
+     * Is only used to generate Rust project if it doesn't exist. */
+    var libVersion = "0.1.0"
+    /** The path to the Rust library, i.e. the directory where `Cargo.toml` is in,
+     * relative to the project's root directory. */
+    var rustPath = "./rust"
+    /** The version of NDK to use.
+     * This is one of the directories found in `{sdk.dir}/ndk/`.
+     *
+     * Automatically uses the latest version if a value is not provided. */
+    var ndkVersion = ""
+    /** Corresponds to the OS you are building with.
+     *
+     * Value is automatically assigned to the host OS. */
+    var preBuilt = ""
+    /** The **Class** in your project that will load the Rust library and have all the `native`/`extern` functions.
+     *
+     * This is used to generated Rust code and library loader in the named Class. */
+    var jniHost = defaultJniHost
+
+    /** Whether `native`/`extern` functions should be generated in the Class [jniHost].
+     *
+     * Default is `true`. */
+    var exportFunctions = true
+    var applyAsCompileDependency = true
     private var architectures: (ArchitectureListScope.() -> Unit)? = null
 
     fun architectures(architectures: ArchitectureListScope.() -> Unit) {
