@@ -14,6 +14,28 @@ internal object ReflectionJVM {
         addNativeMethodDeclaration(project, extension)
     }
 
+    fun isRustJniBlockPresent(project: Project, extension: RustJniExtension): Boolean {
+
+        val jniHost = extension.jniHost
+        if(RustJniExtension.shouldSkipAddingMethods(jniHost, extension)){
+            return false
+        }
+
+        val className = FileUtils.extractClassName(jniHost)
+        val packagePath = FileUtils.extractPackagePath(jniHost)
+
+        val classFile = FileUtils.findClassFile(project, packagePath, className)
+
+        val fileContent = classFile.readText()
+
+        val rustJniBlockPattern = Regex(
+            pattern = "(?s)(?:\\r?\\n)?[ \\t]*//<RustJNI>.*?//</RustJNI>[ \\t]*(?:\\r?\\n)?",
+            options = setOf(RegexOption.MULTILINE)
+        )
+
+        return rustJniBlockPattern.containsMatchIn(fileContent)
+    }
+
     private fun addNativeMethodDeclaration(project: Project, extension: RustJniExtension) {
         val jniHost = extension.jniHost.trim()
 

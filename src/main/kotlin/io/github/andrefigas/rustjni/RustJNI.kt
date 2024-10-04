@@ -38,7 +38,7 @@ class RustJNI : Plugin<Project> {
             project.file("${project.rootProject.projectDir}${File.separator}${extension.rustPath}")
         }
 
-        internal fun configureAndroidSettings() {
+        fun configureAndroidSettings() {
             AndroidSettings.configureAndroidSourceSets(project, extension)
             AndroidSettings.configureNdkAbiFilters(project, extension)
         }
@@ -225,8 +225,26 @@ class RustJNI : Plugin<Project> {
         private fun createRustJNIFile(rustSrcDir: File) {
             println("creating rust_jni.rs for: $rustSrcDir")
             val libFile = File(rustSrcDir, "rust_jni.rs")
-            libFile.writeText(buildRustJNIContent())
+
+            if (ReflectionJVM.isRustJniBlockPresent(project, extension)) {
+                libFile.writeText(buildEmptyJNIContent())
+                ReflectionNative.update(project, extension)
+            } else {
+                libFile.writeText(buildRustJNIContent())
+            }
+
             println("Updated 'rust_jni.rs' with the new content.")
+        }
+
+        private fun buildEmptyJNIContent(): String{
+            return """
+            use jni::JNIEnv;
+            use jni::objects::JClass;
+            //<RustJNI>
+            // primitive imports
+            
+            //</RustJNI>
+            """.trimIndent()
         }
 
         private fun buildRustJNIContent(): String {
