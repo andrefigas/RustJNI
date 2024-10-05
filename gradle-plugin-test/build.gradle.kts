@@ -9,14 +9,14 @@ repositories {
     google()
 }
 
-version = "0.0.17"
-group = "io.github.andrefigas.rustjni"
+version = "0.0.1"
+group = "io.github.andrefigas.rustjni-test"
 
 gradlePlugin {
     plugins {
         create("rustJniPlugin") {
-            id = "io.github.andrefigas.rustjni"
-            implementationClass = "io.github.andrefigas.rustjni.RustJNI"
+            id = "io.github.andrefigas.rustjni-test"
+            implementationClass = "io.github.andrefigas.rustjni.test.RustJNITest"
             displayName = "Rust JNI Gradle Plugin"
             description = "A Gradle plugin that simplifies the creation and compilation of Rust code integrated with Android applications via JNI."
         }

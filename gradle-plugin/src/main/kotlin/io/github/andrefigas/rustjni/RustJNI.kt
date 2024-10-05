@@ -242,7 +242,7 @@ class RustJNI : Plugin<Project> {
             use jni::objects::JClass;
             //<RustJNI>
             // primitive imports
-            
+             use jni::sys::{};
             //</RustJNI>
             """.trimIndent()
         }
