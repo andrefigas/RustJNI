@@ -265,8 +265,7 @@ internal object ReflectionJVM {
 
     // Extracts method signatures from the class file content (Kotlin/Java)
     fun extractMethodSignaturesFromClass(fileContent: String, isKotlinFile: Boolean): List<MethodSignature> {
-        println("extractMethodSignaturesFromClass content: $fileContent isKotlin: $isKotlinFile")
-
+      
         val methodPattern = if (isKotlinFile) {
             // Kotlin method pattern that captures methods with or without parameters
             Regex("""fun\s+(\w+)\s*\(([^)]*)\)\s*:\s*(\w+)""")

@@ -123,8 +123,6 @@ internal object ReflectionNative {
             type.substringBefore(delimiter).trim()
         }
 
-        println("Normalizing type: $normalizedType")
-
         val result = when (normalizedType) {
             PrimitiveJVM.KT_STRING, PrimitiveJVM.JV_STRING -> PrimitiveRust.RS_JSTRING
             PrimitiveJVM.KT_INT, PrimitiveJVM.JV_INT -> PrimitiveRust.RS_JINT
@@ -134,7 +132,6 @@ internal object ReflectionNative {
             else -> PrimitiveRust.RS_JOBJECT
         }
 
-        println("Mapping type $normalizedType to Rust type: $result")
         return result
     }
 
