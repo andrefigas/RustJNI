@@ -1,19 +1,37 @@
-.gradle
-build/
-!gradle-plugin/gradle/wrapper/gradle-wrapper.jar
-!**/gradle-plugin/src/main/**/build/
-!**/gradle-plugin/src/test/**/build/
+# Gradle
+.gradle/
+**/build/
+**/out/
 
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+# IntelliJ IDEA
+**/.idea/
 *.iws
 *.iml
 *.ipr
-out/
-!**/gradle-plugin/src/main/**/out/
-!**/gradle-plugin/src/test/**/out/
 
+# Android/Gradle specific
+**/local.properties
+**/.gradle/
+**/build/
+
+# Eclipse
+.classpath
+.project
+.settings/
+**/bin/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
 .vscode/
+
+# Mac OS
 .DS_Store
+
+# Rust specific
+**/rust/target/
