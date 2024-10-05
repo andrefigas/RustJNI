@@ -1,0 +1,10 @@
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\x86_64-linux-android\release\deps\liblog-110dd3094de83f0f.rmeta: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\macros.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\serde.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\__private_api.rs
+
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\x86_64-linux-android\release\deps\liblog-110dd3094de83f0f.rlib: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\macros.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\serde.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\__private_api.rs
+
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\x86_64-linux-android\release\deps\log-110dd3094de83f0f.d: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\macros.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\serde.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\__private_api.rs
+
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\lib.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\macros.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\serde.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\log-0.4.22\src\__private_api.rs:

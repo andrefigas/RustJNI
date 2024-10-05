@@ -1,0 +1,10 @@
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\release\deps\libwalkdir-6d1f90aa11f7d028.rmeta: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\dent.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\error.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\util.rs
+
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\release\deps\libwalkdir-6d1f90aa11f7d028.rlib: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\dent.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\error.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\util.rs
+
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\release\deps\walkdir-6d1f90aa11f7d028.d: C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\dent.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\error.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\util.rs
+
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\lib.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\dent.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\error.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-6f17d22bba15001f\walkdir-2.5.0\src\util.rs:

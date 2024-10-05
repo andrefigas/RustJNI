@@ -1,0 +1,1 @@
+C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\target\i686-linux-android\release\libmy_rust_lib.so: C:\Users\Administrator\Documents\GitHub\RustJNI\sample\app\src\main\rust\src\rust_jni.rs
