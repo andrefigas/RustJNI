@@ -31,7 +31,8 @@ jobs:
       run: |
         chmod +x gradle-plugin/gradlew
         chmod +x gradle-plugin-test/gradlew
-        chmod +x sample/gradlew
+        chmod +x sample/java/gradlew
+        chmod +x sample/kotlin/gradlew
 
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
@@ -57,7 +58,8 @@ jobs:
         $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "ndk;27.1.12297006"
 
         # Configure local.properties in the sample directory with SDK and NDK paths
-        echo "sdk.dir=$ANDROID_SDK_ROOT" > ./sample/local.properties
+        echo "sdk.dir=$ANDROID_SDK_ROOT" > ./sample/java/local.properties
+        echo "sdk.dir=$ANDROID_SDK_ROOT" > ./sample/kotlin/local.properties
       env:
         ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
@@ -73,7 +75,16 @@ jobs:
         ./gradlew publishToMavenLocal
         cd ..
 
-    - name: Compile Rust JNI Test in sample directory
+    - name: Compile Rust JNI Test in java sample directory
       run: |
-        cd sample
+        cd sample/kotlin
         ./gradlew app:rust-jni-compile-test
+        cd ..
+        cd ..
+
+    - name: Compile Rust JNI Test in kotlin sample directory
+      run: |
+        cd sample/kotlin
+        ./gradlew app:rust-jni-compile-test
+        cd ..
+        cd ..
