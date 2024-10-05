@@ -1,12 +1,23 @@
 package io.github.andrefigas.rustjni.test
 
+import io.github.andrefigas.rustjni.test.jvm.JVMTestRunner
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import java.io.File
 
 class RustJNITest : Plugin<Project> {
 
-    private companion object{
+    companion object{
         const val RUST_JNI_COMPILE_TEST = "rust-jni-compile-test"
+        val JNI_HOST = "app${File.separator}" +
+                "src${File.separator}" +
+                "main${File.separator}" +
+                "java${File.separator}" +
+                "com${File.separator}" +
+                "devfigas${File.separator}" +
+                "rustjni${File.separator}" +
+                "sample${File.separator}" +
+                "MainActivity"
     }
 
     override fun apply(project: Project) {
@@ -16,12 +27,9 @@ class RustJNITest : Plugin<Project> {
             description = "Compiles Rust code for specified test cases"
 
             doFirst {
-                JVMTest.updateJVMContent(project, JVMTest.intArgReturnString, this)
+                JVMTestRunner.test(project, this)
             }
 
-            doLast {
-
-            }
         }
 
     }
