@@ -110,6 +110,12 @@ internal object ReflectionNative {
             PrimitiveRust.RS_JINT -> if (isKotlinFile) PrimitiveJVM.KT_INT else PrimitiveJVM.JV_INT
             PrimitiveRust.RS_JLONG -> if (isKotlinFile) PrimitiveJVM.KT_LONG else PrimitiveJVM.JV_LONG
             PrimitiveRust.RS_JBOOLEAN -> if (isKotlinFile) PrimitiveJVM.KT_BOOLEAN else PrimitiveJVM.JV_BOOLEAN
+            PrimitiveRust.RS_JBYTE -> if (isKotlinFile) PrimitiveJVM.KT_BYTE else PrimitiveJVM.JV_BYTE
+            PrimitiveRust.RS_JCHAR -> if (isKotlinFile) PrimitiveJVM.KT_CHAR else PrimitiveJVM.JV_CHAR
+            PrimitiveRust.RS_JDOUBLE -> if (isKotlinFile) PrimitiveJVM.KT_DOUBLE else PrimitiveJVM.JV_DOUBLE
+            PrimitiveRust.RS_JFLOAT -> if (isKotlinFile) PrimitiveJVM.KT_FLOAT else PrimitiveJVM.JV_FLOAT
+            PrimitiveRust.RS_JSHORT -> if (isKotlinFile) PrimitiveJVM.KT_SHORT else PrimitiveJVM.JV_SHORT
+            PrimitiveRust.RS_JOBJECT -> if (isKotlinFile) PrimitiveJVM.KT_ANY else PrimitiveJVM.JV_OBJECT
             PrimitiveRust.RS_VOID -> if (isKotlinFile) PrimitiveJVM.KT_UNIT else PrimitiveJVM.JV_VOID
             else -> if (isKotlinFile) PrimitiveJVM.KT_ANY else PrimitiveJVM.JV_OBJECT
         }
@@ -128,6 +134,11 @@ internal object ReflectionNative {
             PrimitiveJVM.KT_INT, PrimitiveJVM.JV_INT -> PrimitiveRust.RS_JINT
             PrimitiveJVM.KT_LONG, PrimitiveJVM.JV_LONG -> PrimitiveRust.RS_JLONG
             PrimitiveJVM.KT_BOOLEAN, PrimitiveJVM.JV_BOOLEAN -> PrimitiveRust.RS_JBOOLEAN
+            PrimitiveJVM.KT_BYTE, PrimitiveJVM.JV_BYTE -> PrimitiveRust.RS_JBYTE
+            PrimitiveJVM.KT_CHAR, PrimitiveJVM.JV_CHAR -> PrimitiveRust.RS_JCHAR
+            PrimitiveJVM.KT_DOUBLE, PrimitiveJVM.JV_DOUBLE -> PrimitiveRust.RS_JDOUBLE
+            PrimitiveJVM.KT_FLOAT, PrimitiveJVM.JV_FLOAT -> PrimitiveRust.RS_JFLOAT
+            PrimitiveJVM.KT_SHORT, PrimitiveJVM.JV_SHORT -> PrimitiveRust.RS_JSHORT
             PrimitiveJVM.KT_UNIT, PrimitiveJVM.JV_VOID -> PrimitiveRust.RS_VOID
             else -> PrimitiveRust.RS_JOBJECT
         }
