@@ -1,6 +1,5 @@
 package io.github.andrefigas.rustjni.test.jvm.content
 
-import io.github.andrefigas.rustjni.test.jvm.JVMTestData
 import org.gradle.api.Project
 import org.gradle.api.Task
 import java.io.File
@@ -13,7 +12,7 @@ internal class JVMContentBuilder(
     private val task: Task
 ) {
 
-    val logger = project.logger
+    private val logger = project.logger
 
     private fun clean() {
         if(rustFile.exists()){
@@ -25,23 +24,17 @@ internal class JVMContentBuilder(
         )
     }
 
-    fun apply(vararg data: JVMTestData) {
+    fun apply(data: String) {
         clean()
-        logger.lifecycle("🦀 Starting to run ${data.size} jvm-test-cases")
-        data.forEachIndexed { index, dataTest ->
-            logger.lifecycle("🦀 Starting jvm-test-cases ${index + 1}/${data.size} - '${dataTest.testCase}'")
-            jniHost.writeText(dataTest.content)
-            project.tasks.getByName("rust-jni-compile").actions.forEach { action ->
-                action.execute(task)
-            }
+        logger.lifecycle("🦀 Starting jvm-test-cases")
+        jniHost.writeText(data)
 
-            jniHost.writeText(
-                provider.restoreJVMContent.trimIndent()
-            )
-
-            logger.lifecycle("🦀 jvm-test-cases ${index + 1} - '${dataTest.testCase}' finished successfully ✅")
+        project.tasks.getByName("rust-jni-compile").actions.forEach { action ->
+            action.execute(task)
         }
 
+        logger.lifecycle("🦀 jvm-test-cases finished successfully ✅")
+        clean()
     }
 
 }
