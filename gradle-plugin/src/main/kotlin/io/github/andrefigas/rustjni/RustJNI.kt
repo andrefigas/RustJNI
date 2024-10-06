@@ -4,6 +4,7 @@ import io.github.andrefigas.rustjni.reflection.ReflectionJVM
 import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.internal.impldep.org.tomlj.Toml
 import java.io.File
 import java.util.Properties
 
@@ -130,11 +131,16 @@ class RustJNI : Plugin<Project> {
         }
 
         private fun copyCompiledLibraries() {
-            val libName = extension.libName
+            val libName = extension.libName.ifEmpty {
+                val toml = Toml.parse(File(rustDir, "Cargo.toml").toPath())
+                toml.getString("lib.name")
+                    ?: toml.getString("package.name")
+                    ?: throw org.gradle.api.GradleException("Unable to get libName from Cargo.toml")
+            }
             val architectures = extension.architecturesList
 
             architectures.forEach { archConfig ->
-                val outputDir = createOutputDirForArchitecture(rustDir, archConfig)
+                val outputDir = createOutputDirForArchitecture(archConfig)
                 val fileExtension = getFileExtensionForTarget(archConfig.target)
                 val sourceLib = File(
                     rustDir,
@@ -145,7 +151,7 @@ class RustJNI : Plugin<Project> {
             }
         }
 
-        private fun createOutputDirForArchitecture(rustDir: File, archConfig: ArchitectureConfig): File {
+        private fun createOutputDirForArchitecture(archConfig: ArchitectureConfig): File {
             val outputDirName = when (archConfig.target) {
                 AndroidTarget.ARMV7_LINUX_ANDROIDEABI -> "armeabi-v7a"
                 AndroidTarget.AARCH64_LINUX_ANDROID -> "arm64-v8a"
@@ -192,9 +198,12 @@ class RustJNI : Plugin<Project> {
         }
 
         private fun buildCargoConfig(extension: RustJniExtension): String {
+            val libName = extension.libName.ifEmpty {
+                RustJniExtension.DEFAULT_LIB_NAME
+            }
             return """
             [package]
-            name = "${extension.libName}"
+            name = "$libName"
             version = "${extension.libVersion}"
             edition = "2021"
 

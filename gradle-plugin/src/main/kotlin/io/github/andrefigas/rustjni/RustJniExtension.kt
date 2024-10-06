@@ -8,18 +8,17 @@ import io.github.andrefigas.rustjni.AndroidTarget.X86_64_LINUX_ANDROID
 open class RustJniExtension {
 
     companion object {
-
-        internal const val defaultJniHost = "com.yourpackage.YourClass"
+        internal const val DEFAULT_JNI_HOST = "com.yourpackage.YourClass"
+        internal const val DEFAULT_LIB_NAME = "my_rust_lib"
 
         fun shouldSkipAddingMethods(jniHost: String, extension: RustJniExtension): Boolean {
-            return jniHost == defaultJniHost || !extension.exportFunctions
+            return jniHost == DEFAULT_JNI_HOST || !extension.exportFunctions
         }
     }
 
     // -- Settings for the user of the plugin
     /** The *name* of the Rust library. Same value as `package.name` in `Cargo.toml`. */
-    // TODO: default empty, should be parsed from Cargo.toml if it exists
-    var libName = "my_rust_lib"
+    var libName = ""
     /** The *version* of the Rust library. Same value as `package.version` in `Cargo.toml`.
      *
      * Is only used to generate Rust project if it doesn't exist. */
@@ -39,7 +38,7 @@ open class RustJniExtension {
     /** The **Class** in your project that will load the Rust library and have all the `native`/`extern` functions.
      *
      * This is used to generated Rust code and library loader in the named Class. */
-    var jniHost = defaultJniHost
+    var jniHost = DEFAULT_JNI_HOST
 
     /** Whether `native`/`extern` functions should be generated in the Class [jniHost].
      *
