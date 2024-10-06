@@ -1,11 +1,9 @@
-package io.github.andrefigas.rustjni.test.cases
+package io.github.andrefigas.rustjni.test
 
 import io.github.andrefigas.rustjni.test.jvm.content.JVMContentProvider
-import org.gradle.internal.impldep.org.junit.Test
 
-object JVMTestCases {
+object TestData {
 
-    @Test
     fun all(provider: JVMContentProvider) =
         provider.generate(
             mapOf(
@@ -120,6 +118,7 @@ object JVMTestCases {
 
             )
         )
+
     private fun generateRandomArgCombinations(provider: JVMContentProvider, numArgs: Int): Array<Pair<Array<String>, String>> {
         val argumentTypes = listOf(
             provider.primitiveInt,
