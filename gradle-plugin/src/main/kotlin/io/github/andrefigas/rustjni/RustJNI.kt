@@ -5,7 +5,7 @@ import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import io.github.andrefigas.rustjni.utils.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.internal.impldep.org.tomlj.Toml
+import org.tomlj.Toml
 import java.io.File
 import java.util.Properties
 

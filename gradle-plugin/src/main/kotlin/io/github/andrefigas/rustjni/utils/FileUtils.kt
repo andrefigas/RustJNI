@@ -2,7 +2,7 @@ package io.github.andrefigas.rustjni.utils
 
 import io.github.andrefigas.rustjni.RustJniExtension
 import org.gradle.api.Project
-import org.gradle.internal.impldep.org.tomlj.Toml
+import org.tomlj.Toml
 import java.io.File
 
 internal object FileUtils {
