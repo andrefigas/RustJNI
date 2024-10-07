@@ -345,7 +345,7 @@ internal object ReflectionNative {
             let output = r#"Rust Method: $methodName"#;
             env.new_string(output)
                 .expect("Couldn't create Java string!")
-                .into_inner()
+                .into_raw()
         """.trimIndent()
             PrimitiveRust.RS_JINT -> exampleReturnValue
             PrimitiveRust.RS_JBOOLEAN -> """

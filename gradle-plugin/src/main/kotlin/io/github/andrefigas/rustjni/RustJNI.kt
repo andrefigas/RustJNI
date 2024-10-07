@@ -267,7 +267,7 @@ class RustJNI : Plugin<Project> {
     
                     env.new_string(output)
                         .expect("Couldn't create Java string!")
-                        .into_inner()
+                        .into_raw()
                 }
             """.trimIndent()
         }
