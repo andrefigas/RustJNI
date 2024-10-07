@@ -63,7 +63,7 @@ internal object ReflectionNative {
             )
         }
 
-        val rustFilePath = "${extension.rustPath}${File.separator}src${File.separator}rust_jni.rs"
+        val rustFilePath = FileUtils.getRustSrcFile(FileUtils.getRustDir(project, extension))
         removePrimitiveImports(rustFilePath)
         addPrimitiveImports(rustFilePath)
     }
@@ -156,9 +156,9 @@ internal object ReflectionNative {
     }
 
     private fun readRustJniFile(extension: RustJniExtension): String {
-        val rustLibFile = File(extension.rustPath, "src${File.separator}rust_jni.rs")
+        val rustLibFile = FileUtils.getRustSrcFile(File(extension.rustPath))
         if (!rustLibFile.exists()) {
-            throw org.gradle.api.GradleException("Could not find 'rust_jni.rs' file at ${rustLibFile.absolutePath}")
+            throw org.gradle.api.GradleException("Could not find '${rustLibFile.name}' file at ${rustLibFile.absolutePath}")
         }
         return rustLibFile.readText()
     }
@@ -184,7 +184,7 @@ internal object ReflectionNative {
                     if(kotlinReturnType != rustReturnType){
                         throw GradleException("Method \"${kotlinMethod.methodName}\" is already defined in Rust " +
                                 "with the same signature but a different return type.\n" +
-                                "Check the Rust file: src/rust_jni.rs")
+                                "Check the Rust file: src/lib.rs")
                     }
                 }
 
@@ -205,14 +205,13 @@ internal object ReflectionNative {
 
         if (RustJniExtension.shouldSkipAddingMethods(jniHost, extension)) return
 
-        val rustFilePath = "${extension.rustPath}${File.separator}src${File.separator}rust_jni.rs"
+        val rustFilePath = FileUtils.getRustSrcFile(File(extension.rustPath))
         addMethodToRust(rustFilePath, methodName, parameters, returnType, jniHost, isKotlinFile)
     }
 
     // Removes primitive imports from the Rust file
-    private fun removePrimitiveImports(rustFilePath: String) {
-        val file = File(rustFilePath)
-        val lines = file.readLines()
+    private fun removePrimitiveImports(rustFile: File) {
+        val lines = rustFile.readLines()
         val filteredLines = mutableListOf<String>()
         val removedImports = mutableListOf<String>()
         var insideRustJniBlock = false
@@ -251,14 +250,13 @@ internal object ReflectionNative {
             println("No imports were removed.")
         }
 
-        file.writeText(filteredLines.joinToString("\n"))
+        rustFile.writeText(filteredLines.joinToString("\n"))
     }
 
     // Adds primitive imports to the Rust file if needed
-    private fun addPrimitiveImports(rustFilePath: String) {
-        println("Adding imports to $rustFilePath")
-        val file = File(rustFilePath)
-        val lines = file.readLines()
+    private fun addPrimitiveImports(rustFile: File) {
+        println("Adding imports to $rustFile")
+        val lines = rustFile.readLines()
         val primitiveTypes = mutableSetOf<String>()
 
         val typeRegex = Regex("jstring|jint|jclass|jboolean|jbyte|jchar|jdouble|jfloat|jlong|jshort|jobject")
@@ -290,13 +288,13 @@ internal object ReflectionNative {
             }
 
             println("Added Imports: $importsLine")
-            file.writeText(updatedLines.joinToString("\n"))
+            rustFile.writeText(updatedLines.joinToString("\n"))
         }
     }
 
     // Adds a method to the Rust file
     private fun addMethodToRust(
-        rustFilePath: String,
+        rustFile: File,
         methodName: String,
         parameters: List<String>,
         returnType: String,
@@ -304,7 +302,7 @@ internal object ReflectionNative {
         isKotlinFile: Boolean
     ) {
         val rustContent = buildRustJNIContent(methodName, parameters, returnType, jniHost, isKotlinFile)
-        File(rustFilePath).appendText(rustContent)
+        rustFile.appendText(rustContent)
     }
 
     // Builds the Rust JNI content for a specific method

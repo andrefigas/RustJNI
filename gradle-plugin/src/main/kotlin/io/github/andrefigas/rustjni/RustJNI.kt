@@ -2,6 +2,7 @@ package io.github.andrefigas.rustjni
 
 import io.github.andrefigas.rustjni.reflection.ReflectionJVM
 import io.github.andrefigas.rustjni.reflection.ReflectionNative
+import io.github.andrefigas.rustjni.utils.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.internal.impldep.org.tomlj.Toml
@@ -10,14 +11,14 @@ import java.util.Properties
 
 class RustJNI : Plugin<Project> {
 
-    private companion object{
+    private companion object {
         const val RUST_JNI_COMPILE = "rust-jni-compile"
     }
 
     override fun apply(project: Project) {
         val extension = project.extensions.create("rustJni", RustJniExtension::class.java)
 
-        if(extension.applyAsCompileDependency){
+        if (extension.applyAsCompileDependency) {
             project.tasks.matching { it.name.startsWith("compile") }.configureEach {
                 this.dependsOn(RUST_JNI_COMPILE)
             }
@@ -35,9 +36,8 @@ class RustJNI : Plugin<Project> {
     ) {
 
         /** The directory where the rust project lives. See [RustJniExtension.rustPath]. */
-        private val rustDir : File  by lazy {
-            project.file("${project.rootProject.projectDir}${File.separator}${extension.rustPath}")
-        }
+        val rustDir: File by lazy { FileUtils.getRustDir(project, extension) }
+
 
         fun configureAndroidSettings() {
             AndroidSettings.configureAndroidSourceSets(project, extension)
@@ -57,13 +57,13 @@ class RustJNI : Plugin<Project> {
         private fun createNewRustProject() {
             project.exec {
                 workingDir = rustDir.parentFile
-                commandLine = listOf("cargo", "new", "rust")
+                commandLine = listOf("cargo", "new", "--lib", "rust")
             }
         }
 
         private fun configureRustEnvironment() {
             configCargo()
-            configRustLib()
+            configRustLibFile()
             generateConfigToml()
             ReflectionJVM.update(project, extension)
         }
@@ -166,7 +166,8 @@ class RustJNI : Plugin<Project> {
             return outputDir
         }
 
-        private fun getFileExtensionForTarget(target: String) = if (target.contains("apple-ios")) ".dylib" else ".so"
+        private fun getFileExtensionForTarget(target: String) =
+            if (target.contains("apple-ios")) ".dylib" else ".so"
 
         private fun copyLibraryFile(sourceLib: File, destLib: File) {
             if (sourceLib.exists()) {
@@ -191,120 +192,126 @@ class RustJNI : Plugin<Project> {
             }
         }
 
+        /** Configures the `Cargo.toml` file created by [createNewRustProject]. */
         private fun configCargo() {
             val configToml = File(rustDir, "Cargo.toml")
-            configToml.writeText(buildCargoConfig(extension))
-            println("Cargo.toml updated")
-        }
-
-        private fun buildCargoConfig(extension: RustJniExtension): String {
             val libName = extension.libName.ifEmpty {
                 RustJniExtension.DEFAULT_LIB_NAME
             }
-            return """
-            [package]
-            name = "$libName"
-            version = "${extension.libVersion}"
-            edition = "2021"
-
-            [lib]
-            crate-type = ["cdylib"]
-            path = "src/rust_jni.rs"
-
-            [dependencies]
-            jni = "0.19"
-        """.trimIndent()
+            configToml.writeText(
+                """
+                [package]
+                name = "$libName"
+                version = "${extension.libVersion}"
+                edition = "2021"
+    
+                [lib]
+                crate-type = ["cdylib"]
+                
+                [dependencies]
+                jni = "0.21"
+            """.trimIndent())
+            println("Cargo.toml updated")
         }
 
-        private fun configRustLib() {
-            val rustSrcDir = File(rustDir, "src")
-            deleteMainRsFile(rustSrcDir)
-            createRustJNIFile(rustSrcDir)
-        }
-
-        private fun deleteMainRsFile(rustSrcDir: File) {
-            val mainFile = File(rustSrcDir, "main.rs")
-            if (mainFile.exists() && !mainFile.delete()) {
-                throw org.gradle.api.GradleException("Failed to delete main.rs")
-            } else {
-                println("Deleted 'main.rs'")
-            }
-        }
-
-        private fun createRustJNIFile(rustSrcDir: File) {
-            println("creating rust_jni.rs for: $rustSrcDir")
-            val libFile = File(rustSrcDir, "rust_jni.rs")
+        /** Configures the `lib.rs` (entry point) file created by [createNewRustProject]. */
+        private fun configRustLibFile() {
+            val libFile = FileUtils.getRustSrcFile(rustDir)
+            println("creating $libFile")
 
             if (ReflectionJVM.isRustJniBlockPresent(project, extension)) {
-                libFile.writeText(buildEmptyJNIContent())
+                libFile.writeText("""
+                    use jni::JNIEnv;
+                    use jni::objects::JClass;
+                    //<RustJNI>
+                    // primitive imports
+                    use jni::sys::{};
+                    //</RustJNI>
+                """.trimIndent())
                 ReflectionNative.update(project, extension)
             } else {
                 libFile.writeText(buildRustJNIContent())
             }
 
-            println("Updated 'rust_jni.rs' with the new content.")
-        }
-
-        private fun buildEmptyJNIContent(): String{
-            return """
-            use jni::JNIEnv;
-            use jni::objects::JClass;
-            //<RustJNI>
-            // primitive imports
-             use jni::sys::{};
-            //</RustJNI>
-            """.trimIndent()
+            println("Updated '${libFile.name}' with the new content.")
         }
 
         private fun buildRustJNIContent(): String {
             val javaClassPath = extension.jniHost.replace('.', '_')
             return """
-            use jni::JNIEnv;
-            use jni::objects::JClass;
-            //<RustJNI>
-            // primitive imports
-            use jni::sys::{jstring};
-            //</RustJNI>
-
-            #[no_mangle]
-            pub extern "C" fn Java_${javaClassPath}_sayHello(
-                env: JNIEnv,
-                _class: JClass,
-            ) -> jstring {
-                let output = r#"
-            __________________________
-            < Hello RustJNI >
-            --------------------------
-                    \\
-                     \\
-                        _~^~^~_
-                    \\) /  o o  \\ (/
-                      '_   -   _'
-                      / '-----' \\
-            _________________________________________________________
-            Do your rust implementation there: /rust/src/rust_jni.rs
-            ---------------------------------------------------------"#;
-
-                env.new_string(output)
-                    .expect("Couldn't create Java string!")
-                    .into_inner()
-            }
-        """.trimIndent()
+                use jni::JNIEnv;
+                use jni::objects::JClass;
+                //<RustJNI>
+                // primitive imports
+                use jni::sys::{jstring};
+                //</RustJNI>
+    
+                #[no_mangle]
+                pub extern "C" fn Java_${javaClassPath}_sayHello(
+                    env: JNIEnv,
+                    _class: JClass,
+                ) -> jstring {
+                    let output = r#"
+                __________________________
+                < Hello RustJNI >
+                --------------------------
+                        \\
+                         \\
+                            _~^~^~_
+                        \\) /  o o  \\ (/
+                          '_   -   _'
+                          / '-----' \\
+                _________________________________________________________
+                Do your rust implementation there: /rust/src/lib.rs
+                ---------------------------------------------------------"#;
+    
+                    env.new_string(output)
+                        .expect("Couldn't create Java string!")
+                        .into_inner()
+                }
+            """.trimIndent()
         }
 
+        /** Creates and configures the `config.toml` for the Rust project created by [createNewRustProject].
+         *
+         * This file tells cargo where to find the *compiler* and *linker* for different architectures when compiling for Android. */
         private fun generateConfigToml() {
             val configToml = File(rustDir, ".cargo${File.separator}config.toml")
             if (configToml.exists()) {
                 configToml.delete()
             }
-            val prebuiltPath = getPrebuiltPath(project, extension)
+            val prebuiltPath = getPrebuiltPath()
             configToml.parentFile.mkdirs()
-            configToml.writeText(buildConfigTomlContent(extension, prebuiltPath))
+            configToml.writeText(buildConfigTomlContent(prebuiltPath))
         }
 
-        private fun getPrebuiltPath(project: Project, extension: RustJniExtension): String {
+        private fun buildConfigTomlContent(prebuiltPath: String): String {
+            val architectures = extension.architecturesList
+            if (architectures.isEmpty()) {
+                throw org.gradle.api.GradleException("No architectures specified in rustJni extension")
+            }
+
+            val prebuiltPath = OSHelper.doubleSeparatorIfNeeded(prebuiltPath)
+
+            return buildString {
+                appendLine("#<RustJNI>")
+                appendLine("#auto-generated code")
+                appendLine()
+                architectures.forEach { archConfig ->
+                    val linker = OSHelper.addLinkerExtensionIfNeeded(archConfig.linker)
+                    appendLine("[target.${archConfig.target}]")
+                    appendLine("""ar = "${prebuiltPath}${archConfig.ar}"""")
+                    appendLine("""linker = "${prebuiltPath}${linker}"""")
+                    appendLine()
+                }
+                appendLine("#</RustJNI>")
+            }
+        }
+
+        private fun getPrebuiltPath(): String {
             val props = Properties()
-            project.file("${project.rootProject.projectDir}${File.separator}local.properties").inputStream().use { props.load(it) }
+            project.file("${project.rootProject.projectDir}${File.separator}local.properties")
+                .inputStream().use { props.load(it) }
 
             var ndkDir = props.getProperty("ndk.dir")
 
@@ -353,35 +360,13 @@ class RustJNI : Plugin<Project> {
                     }
                     localPrebuilt
                 }
+
                 extensionPrebuilt.isNotEmpty() -> extensionPrebuilt
                 else -> {
                     println("No 'prebuilt' specified. Using default for OS: $defaultPrebuilt")
                     defaultPrebuilt
                 }
             }.let { prebuilt -> "$ndkDir${File.separator}toolchains${File.separator}llvm${File.separator}prebuilt${File.separator}$prebuilt${File.separator}bin${File.separator}" }
-        }
-
-        private fun buildConfigTomlContent(extension: RustJniExtension, prebuiltPath: String): String {
-            val architectures = extension.architecturesList
-            if (architectures.isEmpty()) {
-                throw org.gradle.api.GradleException("No architectures specified in rustJni extension")
-            }
-
-            val prebuiltPath = OSHelper.doubleSeparatorIfNeeded(prebuiltPath)
-
-            return buildString {
-                appendLine("#<RustJNI>")
-                appendLine("#auto-generated code")
-                appendLine()
-                architectures.forEach { archConfig ->
-                    val linker = OSHelper.addLinkerExtensionIfNeeded(archConfig.linker)
-                    appendLine("[target.${archConfig.target}]")
-                    appendLine("""ar = "${prebuiltPath}${archConfig.ar}"""")
-                    appendLine("""linker = "${prebuiltPath}${linker}"""")
-                    appendLine()
-                }
-                appendLine("#</RustJNI>")
-            }
         }
 
     }
