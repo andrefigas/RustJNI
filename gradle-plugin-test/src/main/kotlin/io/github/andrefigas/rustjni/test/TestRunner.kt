@@ -86,7 +86,7 @@ object JVMTestRunner {
         clean(rustFile, jniHost, provider)
         jniHost.writeText(data)
 
-        TestCases(project, task, jniHost, File(rustFile, "src${File.separator}rust_jni.rs")).apply {
+        TestCases(project, task, jniHost, File(rustFile, "src${File.separator}lib.rs")).apply {
             all()
             finish()
         }
