@@ -1,8 +1,6 @@
-package io.github.andrefigas.rustjni.test.jvm
+package io.github.andrefigas.rustjni.test
 
-import io.github.andrefigas.rustjni.test.RustJNITest
-import io.github.andrefigas.rustjni.test.cases.JVMTestCases
-import io.github.andrefigas.rustjni.test.jvm.content.JVMContentBuilder
+import io.github.andrefigas.rustjni.test.cases.TestCases
 import io.github.andrefigas.rustjni.test.jvm.content.JVMContentProvider
 import io.github.andrefigas.rustjni.test.jvm.content.JavaContentProvider
 import io.github.andrefigas.rustjni.test.jvm.content.KotlinContentProvider
@@ -13,7 +11,7 @@ import java.io.File
 object JVMTestRunner {
 
     private const val JAVA = ".java"
-    private const val KT = ".kt"
+    internal const val KT = ".kt"
 
     fun test(project: Project, task: Task) {
         val jniHost = provideJNIHost(project)
@@ -33,7 +31,7 @@ object JVMTestRunner {
             rustFile,
             jniHost,
             contentProvider,
-            JVMTestCases.all(contentProvider)
+            TestData.all(contentProvider)
         )
     }
 
@@ -85,16 +83,14 @@ object JVMTestRunner {
                       provider : JVMContentProvider,
                       data: String
     ) {
-        val logger = project.logger
         clean(rustFile, jniHost, provider)
-        logger.lifecycle("🦀 Starting jvm-test-cases")
         jniHost.writeText(data)
 
-        project.tasks.getByName("rust-jni-compile").actions.forEach { action ->
-            action.execute(task)
+        TestCases(project, task, jniHost, File(rustFile, "src${File.separator}rust_jni.rs")).apply {
+            all()
+            finish()
         }
 
-        logger.lifecycle("🦀 jvm-test-cases finished successfully ✅")
         clean(rustFile, jniHost, provider)
     }
 

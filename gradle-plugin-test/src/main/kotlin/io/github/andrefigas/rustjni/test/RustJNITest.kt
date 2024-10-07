@@ -1,6 +1,5 @@
 package io.github.andrefigas.rustjni.test
 
-import io.github.andrefigas.rustjni.test.jvm.JVMTestRunner
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
