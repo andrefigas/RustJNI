@@ -1,35 +1,23 @@
-package io.github.andrefigas.rustjni.test.jvm
+package io.github.andrefigas.rustjni.test
 
-import io.github.andrefigas.rustjni.test.RustJNITest
-import io.github.andrefigas.rustjni.test.cases.JVMTestCases
-import io.github.andrefigas.rustjni.test.jvm.content.JVMContentBuilder
+import io.github.andrefigas.rustjni.test.cases.TestCases
 import io.github.andrefigas.rustjni.test.jvm.content.JVMContentProvider
 import io.github.andrefigas.rustjni.test.jvm.content.JavaContentProvider
 import io.github.andrefigas.rustjni.test.jvm.content.KotlinContentProvider
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.internal.impldep.org.junit.Test
 import java.io.File
 
 object JVMTestRunner {
 
     private const val JAVA = ".java"
-    private const val KT = ".kt"
+    internal const val KT = ".kt"
 
     fun test(project: Project, task: Task) {
-        val builder = provideContentBuilder(project, task)
-        val contentProvider = builder.provider
-
-        builder.apply (
-            JVMTestCases.compileMethodSignature_Arg_Int_Return_String(contentProvider),
-        )
-    }
-
-    private fun provideContentBuilder(project: Project, task: Task): JVMContentBuilder {
         val jniHost = provideJNIHost(project)
-        var printer = providePrinter(jniHost)
+        var contentProvider = contentProvider(jniHost)
 
-        val rustProject = File(
+        val rustFile = File(
             project.rootDir.toString(),
             "app${File.separator}" +
                     "src${File.separator}" +
@@ -37,10 +25,17 @@ object JVMTestRunner {
                     "rust"
         )
 
-        return JVMContentBuilder(rustProject, jniHost, printer, project, task)
+        apply(
+            project,
+            task,
+            rustFile,
+            jniHost,
+            contentProvider,
+            TestData.all(contentProvider)
+        )
     }
 
-    private fun providePrinter(jniHost: File): JVMContentProvider {
+    private fun contentProvider(jniHost: File): JVMContentProvider {
         val path = jniHost.toString()
         return when {
             path.endsWith(KT) -> KotlinContentProvider
@@ -69,6 +64,34 @@ object JVMTestRunner {
         }
 
         throw IllegalStateException("No JVM file found")
+    }
+
+    private fun clean(rustFile : File, jniHost : File, provider : JVMContentProvider){
+        if(rustFile.exists()){
+            rustFile.deleteRecursively()
+        }
+
+        jniHost.writeText(
+            provider.restoreJVMContent.trimIndent()
+        )
+    }
+
+    private fun apply(project: Project,
+                      task: Task,
+                      rustFile : File,
+                      jniHost : File,
+                      provider : JVMContentProvider,
+                      data: String
+    ) {
+        clean(rustFile, jniHost, provider)
+        jniHost.writeText(data)
+
+        TestCases(project, task, jniHost, File(rustFile, "src${File.separator}rust_jni.rs")).apply {
+            all()
+            finish()
+        }
+
+        clean(rustFile, jniHost, provider)
     }
 
 }
