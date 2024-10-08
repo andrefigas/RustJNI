@@ -97,7 +97,7 @@ internal object ReflectionJVM {
         val methodsToGenerate = parseRustJniFunctions(extension, jniHost, isKotlinFile)
 
         if (methodsToGenerate.isEmpty()) {
-            throw org.gradle.api.GradleException("No JNI methods found for class $jniHost in rust_jni.rs")
+            throw org.gradle.api.GradleException("No JNI methods found for class $jniHost in lib.rs")
         }
 
         return buildMethodDeclarations(methodsToGenerate, extension.libName, isKotlinFile)
@@ -176,10 +176,10 @@ internal object ReflectionJVM {
         return MethodSignature(jniFunctionName, returnType, parameters)
     }
 
-    private fun readRustJniFile(extension : RustJniExtension): String {
-        val rustLibFile = File(extension.rustPath , "src${File.separator}rust_jni.rs")
+    private fun readRustJniFile(extension: RustJniExtension): String {
+        val rustLibFile = FileUtils.getRustSrcFile(File(extension.rustPath))
         if (!rustLibFile.exists()) {
-            throw org.gradle.api.GradleException("Could not find 'rust_jni.rs' file at ${rustLibFile.absolutePath}")
+            throw org.gradle.api.GradleException("Could not find '${rustLibFile.name}' file at ${rustLibFile.absolutePath}")
         }
         return rustLibFile.readText()
     }

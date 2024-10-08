@@ -35,4 +35,5 @@ dependencies {
     implementation(gradleApi())
     implementation(localGroovy())
     compileOnly("com.android.tools.build:gradle:8.1.1")
+    implementation("org.tomlj:tomlj:1.1.1")
 }
