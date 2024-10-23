@@ -75,16 +75,7 @@ jobs:
         ./gradlew publishToMavenLocal
         cd ..
 
-    - name: Compile Rust JNI Test in java sample directory
+    - name: Compile Rust JNI Test
       run: |
-        cd sample/kotlin
-        ./gradlew app:rust-jni-compile-test
-        cd ..
-        cd ..
-
-    - name: Compile Rust JNI Test in kotlin sample directory
-      run: |
-        cd sample/kotlin
-        ./gradlew app:rust-jni-compile-test
-        cd ..
-        cd ..
+        cd gradle-plugin-test
+        ./gradlew executeTest
