@@ -131,12 +131,7 @@ class RustJNI : Plugin<Project> {
         }
 
         private fun copyCompiledLibraries() {
-            val libName = extension.libName.ifEmpty {
-                val toml = Toml.parse(File(rustDir, "Cargo.toml").toPath())
-                toml.getString("lib.name")
-                    ?: toml.getString("package.name")
-                    ?: throw org.gradle.api.GradleException("Unable to get libName from Cargo.toml")
-            }
+            val libName = FileUtils.getLibName(project, extension)
             val architectures = extension.architecturesList
 
             architectures.forEach { archConfig ->

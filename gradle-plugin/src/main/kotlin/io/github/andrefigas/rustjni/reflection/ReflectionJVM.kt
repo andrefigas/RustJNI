@@ -51,7 +51,7 @@ internal object ReflectionJVM {
 
         fileContent = removeExistingRustJniBlockContent(fileContent)
 
-        val codeToInsertWithoutIndent = generateMethodDeclarations(extension, isKotlinFile)
+        val codeToInsertWithoutIndent = generateMethodDeclarations(project, extension, isKotlinFile)
 
         val newFileContent = insertGeneratedCode(fileContent, codeToInsertWithoutIndent, className)
 
@@ -90,6 +90,7 @@ internal object ReflectionJVM {
     }
 
     private fun generateMethodDeclarations(
+        project: Project,
         extension: RustJniExtension,
         isKotlinFile: Boolean
     ): String {
@@ -100,7 +101,7 @@ internal object ReflectionJVM {
             throw org.gradle.api.GradleException("No JNI methods found for class $jniHost in lib.rs")
         }
 
-        return buildMethodDeclarations(methodsToGenerate, extension.libName, isKotlinFile)
+        return buildMethodDeclarations(methodsToGenerate, FileUtils.getLibName(project, extension), isKotlinFile)
     }
 
     private fun parseRustJniFunctions(

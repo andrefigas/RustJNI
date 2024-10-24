@@ -13,21 +13,17 @@ version = "0.0.18"
 group = "io.github.andrefigas.rustjni"
 
 gradlePlugin {
+    website.set("https://github.com/andrefigas/RustJNI")
+    vcsUrl.set("https://github.com/andrefigas/RustJNI")
     plugins {
         create("rustJniPlugin") {
             id = "io.github.andrefigas.rustjni"
             implementationClass = "io.github.andrefigas.rustjni.RustJNI"
             displayName = "Rust JNI Gradle Plugin"
             description = "A Gradle plugin that simplifies the creation and compilation of Rust code integrated with Android applications via JNI."
+            tags.set(listOf("rust", "jni", "android", "gradle-plugin", "native-code", "android-development", "rust-jni"))
         }
     }
-}
-
-pluginBundle {
-    website = "https://github.com/andrefigas/RustJNI"
-    vcsUrl = "https://github.com/andrefigas/RustJNI"
-    description = "A Gradle plugin that simplifies the creation and compilation of Rust code integrated with Android applications via JNI."
-    tags = listOf("rust", "jni", "android", "gradle-plugin", "native-code", "android-development", "rust-jni")
 }
 
 dependencies {
