@@ -55,6 +55,15 @@ internal object FileUtils {
     fun getRustDir(project: Project, extension: RustJniExtension): File =
         project.file("${project.rootProject.projectDir}${File.separator}${extension.rustPath}")
 
+    /** Gets the name of the rust  */
+    fun getLibName(project: Project, extension: RustJniExtension): String =
+        extension.libName.ifEmpty {
+            val toml = Toml.parse(File(getRustDir(project, extension), "Cargo.toml").toPath())
+            toml.getString("lib.name")
+                ?: toml.getString("package.name")
+                ?: throw org.gradle.api.GradleException("Unable to get libName from Cargo.toml")
+        }
+
     /** Gets the file that is used as the Rust library's main file,
      * i.e. where all the Java-to-Rust functions are defined. */
     fun getRustSrcFile(rustDir: File): File {
