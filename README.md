@@ -20,7 +20,7 @@ This will require some investigation and testing.*
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.15"
+    id("io.github.andrefigas.rustjni") version "0.0.19"
 }
 ```
 
@@ -58,7 +58,7 @@ Once the setup is finished, you only need to compile your project to ensure the 
 
 
 This will compile your Rust project. If you don't have one, a new project will be created here:
-`/rust/src/rust_jni.rs`
+`app/src/main/rust/src/rust_jni.rs`
 
 ### How to link the Rust library with the Android project
 
@@ -114,6 +114,6 @@ Check your console log for something like this:
           '_   -   _'
           / '-----' \\
  _________________________________________________________
- Do your rust implementation there: /rust/src/rust_jni.rs
+ Do your rust implementation there: app/src/main/rust/src/rust_jni.rs
  ---------------------------------------------------------
 ```
