@@ -38,20 +38,25 @@ class RustJNI : Plugin<Project> {
         /** The directory where the rust project lives. See [RustJniExtension.rustPath]. */
         val rustDir: File by lazy { FileUtils.getRustDir(project, extension) }
 
-        private fun runCargoCommand(commands: List<String>, dir : File = rustDir) {
-            runCommand("cargo", dir, commands)
+        private fun runCargoCommand(arguments: List<String>, dir: File = rustDir) {
+            runCommand("cargo", arguments, dir)
         }
 
-        private fun runRustupCommand(commands: List<String>, dir : File = rustDir) {
-            runCommand("rustup", dir, commands)
+        private fun runRustupCommand(arguments: List<String>, dir: File = rustDir) {
+            runCommand("rustup", arguments, dir)
         }
 
-        private fun runCommand(executor : String,dir : File = rustDir,  commands: List<String>) {
-            val fullCommand = listOf(executor) + commands
+        /** Run a command like you would in a terminal.
+         *
+         * The [executable] can be one of the executables named in the **PATH** environment variable.
+         *
+         * Sets [dir] as the *current working directory (cwd)* of the command. */
+        private fun runCommand(executable: String, arguments: List<String>, dir: File = rustDir) {
+            val fullCommand = listOf(executable) + arguments
             try {
                 // Log the full command for diagnostic purposes
                 //val dir = project.file(extension.rustPath)
-                println("Running $executor command: ${fullCommand.joinToString(" ")} in $dir")
+                println("Running $executable command: ${fullCommand.joinToString(" ")} in $dir")
 
                 // Execute the command
                 val result = project.exec {
@@ -65,20 +70,20 @@ class RustJNI : Plugin<Project> {
 
                 // Check the exit code to determine success or failure
                 if (result.exitValue != 0) {
-                    println("$executor command failed with exit code ${result.exitValue}")
-                    throw IllegalStateException("$executor command failed: ${fullCommand.joinToString(" ")} in  in $dir")
+                    println("$executable command failed with exit code ${result.exitValue}")
+                    throw IllegalStateException("$executable command failed: ${fullCommand.joinToString(" ")} in  in $dir")
                 } else {
-                    println("$executor command succeeded.")
+                    println("$executable command succeeded.")
                 }
 
             } catch (e: IOException) {
                 // Log specific message for I/O issues
-                println("IOException occurred while attempting to execute $executor command: ${e.message}")
-                throw IllegalStateException("Failed to execute $executor command due to an IOException in $dir", e)
+                println("IOException occurred while attempting to execute $executable command: ${e.message}")
+                throw IllegalStateException("Failed to execute $executable command due to an IOException in $dir", e)
             } catch (e: Exception) {
                 // General exception logging
-                println("An error occurred while executing $executor command: ${e.message}")
-                throw IllegalStateException("Failed to execute $executor command: ${fullCommand.joinToString(" ")} in $dir", e)
+                println("An error occurred while executing $executable command: ${e.message}")
+                throw IllegalStateException("Failed to execute $executable command: ${fullCommand.joinToString(" ")} in $dir", e)
             }
         }
 
