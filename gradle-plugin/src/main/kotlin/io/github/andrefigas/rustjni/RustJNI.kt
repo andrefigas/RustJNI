@@ -5,8 +5,8 @@ import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import io.github.andrefigas.rustjni.utils.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.tomlj.Toml
 import java.io.File
+import java.io.IOException
 import java.util.Properties
 
 class RustJNI : Plugin<Project> {
@@ -38,6 +38,54 @@ class RustJNI : Plugin<Project> {
         /** The directory where the rust project lives. See [RustJniExtension.rustPath]. */
         val rustDir: File by lazy { FileUtils.getRustDir(project, extension) }
 
+        private fun runCargoCommand(arguments: List<String>, dir: File = rustDir) {
+            runCommand("cargo", arguments, dir)
+        }
+
+        private fun runRustupCommand(arguments: List<String>, dir: File = rustDir) {
+            runCommand("rustup", arguments, dir)
+        }
+
+        /** Run a command like you would in a terminal.
+         *
+         * The [executable] can be one of the executables named in the **PATH** environment variable.
+         *
+         * Sets [dir] as the *current working directory (cwd)* of the command. */
+        private fun runCommand(executable: String, arguments: List<String>, dir: File = rustDir) {
+            val fullCommand = listOf(executable) + arguments
+            try {
+                // Log the full command for diagnostic purposes
+                //val dir = project.file(extension.rustPath)
+                println("Running $executable command: ${fullCommand.joinToString(" ")} in $dir")
+
+                // Execute the command
+                val result = project.exec {
+                    environment("PATH", System.getenv("PATH"))
+                    workingDir = dir
+                    commandLine = fullCommand
+                    isIgnoreExitValue = true // Allows us to handle exit status manually
+                    standardOutput = System.out
+                    errorOutput = System.err
+                }
+
+                // Check the exit code to determine success or failure
+                if (result.exitValue != 0) {
+                    println("$executable command failed with exit code ${result.exitValue}")
+                    throw IllegalStateException("$executable command failed: ${fullCommand.joinToString(" ")} in  in $dir")
+                } else {
+                    println("$executable command succeeded.")
+                }
+
+            } catch (e: IOException) {
+                // Log specific message for I/O issues
+                println("IOException occurred while attempting to execute $executable command: ${e.message}")
+                throw IllegalStateException("Failed to execute $executable command due to an IOException in $dir", e)
+            } catch (e: Exception) {
+                // General exception logging
+                println("An error occurred while executing $executable command: ${e.message}")
+                throw IllegalStateException("Failed to execute $executable command: ${fullCommand.joinToString(" ")} in $dir", e)
+            }
+        }
 
         fun configureAndroidSettings() {
             AndroidSettings.configureAndroidSourceSets(project, extension)
@@ -55,10 +103,7 @@ class RustJNI : Plugin<Project> {
         }
 
         private fun createNewRustProject() {
-            project.exec {
-                workingDir = rustDir.parentFile
-                commandLine = listOf("cargo", "new", "--lib", "rust")
-            }
+            runCargoCommand(listOf("new", "--lib", rustDir.name), rustDir.parentFile)
         }
 
         private fun configureRustEnvironment() {
@@ -107,10 +152,7 @@ class RustJNI : Plugin<Project> {
 
         private fun addRustTargets() {
             extension.architecturesList.forEach { archConfig ->
-                project.exec {
-                    workingDir = rustDir
-                    commandLine = listOf("rustup", "--verbose", "target", "add", archConfig.target)
-                }
+                runRustupCommand(listOf("target", "add", archConfig.target))
             }
         }
 
@@ -123,10 +165,7 @@ class RustJNI : Plugin<Project> {
 
         private fun buildRustForArchitectures() {
             extension.architecturesList.forEach { archConfig ->
-                project.exec {
-                    workingDir = rustDir
-                    commandLine = listOf("cargo", "build", "--target", archConfig.target, "--release", "--verbose")
-                }
+                runCargoCommand(listOf("build", "--target", archConfig.target, "--release", "--verbose"))
             }
         }
 
