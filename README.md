@@ -20,7 +20,7 @@ This will require some investigation and testing.*
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.19"
+    id("io.github.andrefigas.rustjni") version "0.0.20"
 }
 ```
 
@@ -29,6 +29,7 @@ plugins {
 **build.gradle.kts** (module level)
 ```kotlin
 rustJni{
+    rustPath = "./app/src/main/rust"
     ndkVersion = "25.2.9519653"
     architectures {
         armv7_linux_androideabi("armv7a-linux-androideabi21-clang")
@@ -66,6 +67,7 @@ Inform the plugin which Kotlin/Java class will load the Rust library.
 
 ```kotlin
 rustJni{
+    rustPath = "./app/src/main/rust"
     ndkVersion = "25.2.9519653"
     jniHost = "com.devfigas.rustjni.sample.MainActivity"
     architectures {
