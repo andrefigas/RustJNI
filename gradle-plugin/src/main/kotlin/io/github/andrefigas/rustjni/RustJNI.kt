@@ -53,21 +53,11 @@ class RustJNI : Plugin<Project> {
          * Sets [dir] as the *current working directory (cwd)* of the command. */
         private fun runCommand(executable: String, arguments: List<String>, dir: File = rustDir) {
             val userHome = System.getProperty("user.home")
+            val isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+            val exec_ext = if (isWindows) ".exe" else ""
 
-            val osName = System.getProperty("os.name").toLowerCase()
-            val isWindows = osName.contains("win")
-
-            val cargoBinDir = if (isWindows) {
-                "$userHome\\.cargo\\bin"
-            } else {
-                "$userHome/.cargo/bin"
-            }
-
-            val executablePath = if (isWindows) {
-                "$cargoBinDir\\$executable.exe"
-            } else {
-                "$cargoBinDir/$executable"
-            }
+            val cargoBinDir = "$userHome${File.separator}.cargo${File.separator}bin"
+            val executablePath = "$cargoBinDir${File.separator}$executable$exec_ext"
 
             val executableFile = File(executablePath)
             if (!executableFile.exists()) {
