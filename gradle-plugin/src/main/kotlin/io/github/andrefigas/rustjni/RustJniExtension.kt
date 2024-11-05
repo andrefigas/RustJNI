@@ -4,6 +4,7 @@ import io.github.andrefigas.rustjni.AndroidTarget.AARCH64_LINUX_ANDROID
 import io.github.andrefigas.rustjni.AndroidTarget.ARMV7_LINUX_ANDROIDEABI
 import io.github.andrefigas.rustjni.AndroidTarget.I686_LINUX_ANDROID
 import io.github.andrefigas.rustjni.AndroidTarget.X86_64_LINUX_ANDROID
+import io.github.andrefigas.rustjni.reflection.Visibility
 
 open class RustJniExtension {
 
@@ -39,6 +40,13 @@ open class RustJniExtension {
      *
      * This is used to generated Rust code and library loader in the named Class. */
     var jniHost = DEFAULT_JNI_HOST
+
+    /** The visibility of the generated functions in the Class [jniHost].
+     * Default is [Visibility.DEFAULT].
+     * Options are [Visibility.PUBLIC], [Visibility.PROTECTED], [Visibility.PRIVATE], [Visibility.DEFAULT].
+     * Disclaimer: DEFAULT will omit the visibility modifier and assume the default visibility of the Programming Language.
+     */
+    var jniMethodsVisibility : Visibility = Visibility.DEFAULT
 
     /** Whether `native`/`extern` functions should be generated in the Class [jniHost].
      *
