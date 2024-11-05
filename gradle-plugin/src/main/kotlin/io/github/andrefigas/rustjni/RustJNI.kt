@@ -52,18 +52,28 @@ class RustJNI : Plugin<Project> {
          *
          * Sets [dir] as the *current working directory (cwd)* of the command. */
         private fun runCommand(executable: String, arguments: List<String>, dir: File = rustDir) {
-            val fullCommand = listOf(executable) + arguments
+            val userHome = System.getProperty("user.home")
+            val isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+            val exec_ext = if (isWindows) ".exe" else ""
+
+            val cargoBinDir = "$userHome${File.separator}.cargo${File.separator}bin"
+            val executablePath = "$cargoBinDir${File.separator}$executable$exec_ext"
+
+            val executableFile = File(executablePath)
+            if (!executableFile.exists()) {
+                println("Executable not found at: $executablePath")
+                throw IllegalStateException("Executable not found at: $executablePath")
+            }
+
+            val fullCommand = listOf(executablePath) + arguments
+
             try {
-                // Log the full command for diagnostic purposes
-                //val dir = project.file(extension.rustPath)
                 println("Running $executable command: ${fullCommand.joinToString(" ")} in $dir")
 
-                // Execute the command
                 val result = project.exec {
-                    environment("PATH", System.getenv("PATH"))
                     workingDir = dir
                     commandLine = fullCommand
-                    isIgnoreExitValue = true // Allows us to handle exit status manually
+                    isIgnoreExitValue = true
                     standardOutput = System.out
                     errorOutput = System.err
                 }
@@ -71,7 +81,7 @@ class RustJNI : Plugin<Project> {
                 // Check the exit code to determine success or failure
                 if (result.exitValue != 0) {
                     println("$executable command failed with exit code ${result.exitValue}")
-                    throw IllegalStateException("$executable command failed: ${fullCommand.joinToString(" ")} in  in $dir")
+                    throw IllegalStateException("$executable command failed: ${fullCommand.joinToString(" ")} in $dir")
                 } else {
                     println("$executable command succeeded.")
                 }
