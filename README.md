@@ -9,9 +9,6 @@ Although Android Studio does not offer robust support for Rust, this plugin prov
 | [Rust](https://www.rust-lang.org/learn/get-started) | 1.79.0       |
 | NDK (Tools -> SDK Manager -> SDK Tools -> NDK)      |              |
 
-*There are plans to lower certain version requirements. 
-This will require some investigation and testing.*
-
 ## Setup
 
 ### Import Plugin
@@ -20,9 +17,10 @@ This will require some investigation and testing.*
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.22"
+    id("io.github.andrefigas.rustjni") version "<latest_version>"
 }
 ```
+Check the latest version [here](https://plugins.gradle.org/plugin/io.github.andrefigas.rustjni) (recommend) or maybe the [CHANGELOG.md](./doc/CHANGELOG.md) can help you to choose a version. 
 
 ### Configure architecture
 
@@ -119,3 +117,62 @@ Check your console log for something like this:
  Do your rust implementation there: app/src/main/rust/src/rust_jni.rs
  ---------------------------------------------------------
 ```
+
+### How to generate Rust code ?
+
+If you already used c++ in Android, you already saw something like this:
+![Kt to JNI](./doc/images/kt_to_cpp.png)
+
+If you opt to use the use rust, there are a easier solution: It will be generated automatically when you compile your project:
+
+You just have to:
+- Make sure you filled the [jniHost](#how-to-link-the-rust-library-with-the-android-project) in the rustJni configuration
+- Make sure your method follows that pattern:
+
+```kotlin
+private external fun foo(): String
+```
+```java
+public static native String foo();
+```
+
+- You code have to be placed between the comments `//<RustJNI>` and `//</RustJNI>`
+
+```
+//<RustJNI>
+// auto-generated code
+
+//<your methods here>
+
+static { System.loadLibrary("my_rust_lib"); }
+
+//</RustJNI>
+```
+
+### How to generate Java/Kotlin code ?
+
+You can do the opposite, you can generate you JNI code first and let this plugin mirror it in your Kotlin/Java code.
+You just have to follow same [instructions](#how-to-generate-rust-code) as above.
+
+When you compile your project, the plugin will create those methods in your Kotlin/Java code.
+
+Additionally, you may want to change the methods visibility:
+
+- Visibility.PUBLIC
+- Visibility.PRIVATE
+- Visibility.PROTECTED
+- Visibility.DEFAULT: this one will omit the this modifier and assume default visibility by programming language: Kotlin (**public**) and Java (**package-private**)
+
+```kotlin
+rustJni{
+    //...
+    jniMethodsVisibility = Visibility.PUBLIC
+    //...
+}
+```
+
+### How can I take a look at some samples?
+
+- [Java](./sample/java) - A java sample with 1 method
+- [Kotlin](./sample/java) - A java sample with 1 method
+- [Game](./sample/game) - A simple game without any engine like cocos2d, just Rust and Android
