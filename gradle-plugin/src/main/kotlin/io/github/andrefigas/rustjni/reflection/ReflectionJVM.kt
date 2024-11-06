@@ -273,22 +273,25 @@ internal object ReflectionJVM {
 
     // Extracts method signatures from the class file content (Kotlin/Java)
     fun extractMethodSignaturesFromClass(fileContent: String, isKotlinFile: Boolean): List<MethodSignature> {
-      
         val methodPattern = if (isKotlinFile) {
-            // Kotlin method pattern that captures methods with or without parameters
-            Regex("""fun\s+(\w+)\s*\(([^)]*)\)\s*:\s*(\w+)""")
+            // Modified to capture external Kotlin methods with optional visibility and return type
+            Regex("""\b(?:public|private|protected|internal)?\s*external\s+fun\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*(\w+))?""")
         } else {
-            // Java native method pattern that captures methods with or without parameters
+            // Java native method pattern to capture methods with or without parameters
             Regex("""\b(?:private|protected|public)?\s*(?:static)?\s*native\s+(\w+)\s+(\w+)\s*\(([^)]*)\)\s*;""")
         }
 
         return methodPattern.findAll(fileContent).map { result ->
-            val (methodName, returnType, parameters) = if (isKotlinFile) {
-                // Kotlin uses groupValues[1] for method name, groupValues[3] for return type, groupValues[2] for parameters
-                Triple(result.groupValues[1], result.groupValues[3], result.groupValues[2].trim())
+            val (methodName, parameters, returnType) = if (isKotlinFile) {
+                // Kotlin method pattern that captures methods with or without parameters
+                // If the return type is absent, assume Unit
+                Triple(result.groupValues[1],
+                    result.groupValues[2].trim(),
+                    result.groupValues.getOrNull(3).orEmpty().ifEmpty { PrimitiveJVM.KT_UNIT }
+                )
             } else {
-                // Java uses groupValues[2] for method name, groupValues[1] for return type, groupValues[3] for parameters
-                Triple(result.groupValues[2], result.groupValues[1], result.groupValues[3].trim())
+                // For Java, groups are organized differently
+                Triple(result.groupValues[2], result.groupValues[3].trim(), result.groupValues[1])
             }
 
             val parameterList = if (parameters.isNotEmpty()) {
@@ -303,7 +306,6 @@ internal object ReflectionJVM {
             MethodSignature(methodName, returnType, parameterList)
         }.toList()
     }
-
 
 }
 
