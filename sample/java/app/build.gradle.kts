@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("io.github.andrefigas.rustjni") version "0.0.19"
+    id("io.github.andrefigas.rustjni") version "0.0.22"
 }
 
 rustJni{
