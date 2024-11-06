@@ -20,7 +20,7 @@ This will require some investigation and testing.*
 ```kotlin
 plugins {
     //...
-    id("io.github.andrefigas.rustjni") version "0.0.21"
+    id("io.github.andrefigas.rustjni") version "0.0.22"
 }
 ```
 
