@@ -129,11 +129,14 @@ You just have to:
 - Make sure you filled the [jniHost](#how-to-link-the-rust-library-with-the-android-project) in the rustJni configuration
 - Make sure your method follows that pattern:
 
+**kotlin**
 ```kotlin
 private external fun foo(): String
 ```
+
+**java**
 ```java
-public static native String foo();
+private static native String foo();
 ```
 
 - You code have to be placed between the comments `//<RustJNI>` and `//</RustJNI>`
