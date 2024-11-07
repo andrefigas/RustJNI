@@ -1,3 +1,5 @@
+import io.github.andrefigas.rustjni.reflection.Visibility
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -7,6 +9,7 @@ plugins {
 rustJni{
     rustPath = "./app/src/main/rust"
     jniHost = "com.devfigas.rustjni.sample.MainActivity"
+    jniMethodsVisibility = Visibility.PRIVATE
     ndkVersion = "27.1.12297006"
     architectures {
         armv7_linux_androideabi("armv7a-linux-androideabi21-clang")
