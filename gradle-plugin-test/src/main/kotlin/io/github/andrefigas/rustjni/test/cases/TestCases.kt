@@ -1,6 +1,7 @@
 package io.github.andrefigas.rustjni.test.cases
 
 import io.github.andrefigas.rustjni.test.JVMTestRunner
+import io.github.andrefigas.rustjni.test.toml.TomlContentProvider
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -11,11 +12,16 @@ class TestCases(
     private val project: Project,
     private val task: Task,
     private val jniHost: File,
-    private val rustFile: File
+    private val rustFile: File,
+    private val cargoConfigFile : File,
+    ndkDir : String,
 ) {
 
+    private val tomlContentProvider = TomlContentProvider(ndkDir)
     private val rustContent by lazy { rustFile.readText() }
     private val jvmContent by lazy { jniHost.readText() }
+    private val cargoConfigContent
+        get() = cargoConfigFile.readText()
 
     private val isKotlin = jniHost.toString().endsWith(JVMTestRunner.KT)
     private val logger = project.logger
@@ -29,6 +35,44 @@ class TestCases(
         }
 
         assert(true, "given a generated code, it should compile successfully")
+    }
+
+    @Test
+    fun assertCargoConfigIsSuccessfullyGenerated(){
+        assertCargoConfigContains(
+            tomlContentProvider.cargoConfig().trim(),
+            "given a generated code, it should generate the correct .cargo/config.toml"
+        )
+    }
+
+    @Test
+    fun assertCargoConfigEditsIsPreserved(){
+
+        val content = buildString {
+            appendLine("[section1]")
+            appendLine("definition1 = \"definition1\"")
+            appendLine(tomlContentProvider.cargoConfig().trim())
+            appendLine("[section2]")
+            appendLine("definition2 = \"definition2\"")
+        }
+
+        cargoConfigFile.writeText(
+            content
+        )
+
+        project.tasks.getByName("rust-jni-compile").actions.forEach { action ->
+            action.execute(task)
+        }
+
+        assertCargoConfigContains(
+            "[section1]\ndefinition1 = \"definition1\"",
+            "given a generated .cargo/config.toml edited manually, it should not remove the existing content before the generated one"
+        )
+
+        assertCargoConfigContains(
+            "[section2]\ndefinition2 = \"definition2\"",
+            "given a generated .cargo/config.toml edited manually, it should not remove the existing content after the generated one"
+        )
     }
 
     private fun assert(condition : Boolean, useCase : String, errorMessage : String = ""){
@@ -50,6 +94,10 @@ class TestCases(
         assertContains(jvmContent, jniHost.toString(), substring, useCase)
     }
 
+    private fun assertCargoConfigContains(substring: String, useCase: String) {
+        assertContains(cargoConfigContent, cargoConfigFile.toString(), substring, useCase)
+    }
+
     private fun assertContains(text: String, path : String , substring: String, useCase: String) {
 
         val normalizedText = text.replace("\\s".toRegex(), "")
@@ -58,7 +106,7 @@ class TestCases(
         if (!normalizedText.contains(normalizedSubstring)) {
             val missingPart = substring.lines().firstOrNull { !text.contains(it.trim()) }
 
-            val errorMessage = "assertContains fails:\n$path\nDoes not contain:\n$substring\nMissing part: $missingPart"
+            val errorMessage = "assertContains fails:\nfile:\n$path\n\ncontent:\n$text\n\nDoes not contain:\n$substring\n\nMissing part: $missingPart"
             assert(false, useCase, errorMessage)
         } else {
             assert(true, useCase)
@@ -78,6 +126,8 @@ class TestCases(
 
     fun all() {
         assertCompilation()
+        assertCargoConfigIsSuccessfullyGenerated()
+        assertCargoConfigEditsIsPreserved()
 
         assertIntParam()
         assertLongParam()

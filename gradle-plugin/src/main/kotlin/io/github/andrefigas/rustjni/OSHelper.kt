@@ -2,10 +2,18 @@ package io.github.andrefigas.rustjni
 
 import java.io.File
 
-internal object OSHelper {
+object OSHelper {
 
     fun isWindows(): Boolean {
         return System.getProperty("os.name").toLowerCase().contains("win")
+    }
+
+    fun isMac(): Boolean {
+        return System.getProperty("os.name").toLowerCase().contains("mac")
+    }
+
+    fun isLinux(): Boolean {
+        return System.getProperty("os.name").toLowerCase().contains("linux")
     }
 
     fun doubleSeparatorIfNeeded(path: String): String {

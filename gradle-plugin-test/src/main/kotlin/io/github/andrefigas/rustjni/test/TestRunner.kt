@@ -7,6 +7,7 @@ import io.github.andrefigas.rustjni.test.jvm.content.KotlinContentProvider
 import org.gradle.api.Project
 import org.gradle.api.Task
 import java.io.File
+import java.util.Properties
 
 object JVMTestRunner {
 
@@ -25,9 +26,16 @@ object JVMTestRunner {
                     "rust"
         )
 
+        val props = Properties()
+        project.file("${project.rootProject.projectDir}${File.separator}local.properties")
+            .inputStream().use { props.load(it) }
+
+        val ndkDir = "${props.getProperty("sdk.dir")}${File.separator}ndk"
+
         apply(
             project,
             task,
+            ndkDir,
             rustFile,
             jniHost,
             contentProvider,
@@ -78,6 +86,7 @@ object JVMTestRunner {
 
     private fun apply(project: Project,
                       task: Task,
+                      ndkDir: String,
                       rustFile : File,
                       jniHost : File,
                       provider : JVMContentProvider,
@@ -86,7 +95,13 @@ object JVMTestRunner {
         clean(rustFile, jniHost, provider)
         jniHost.writeText(data)
 
-        TestCases(project, task, jniHost, File(rustFile, "src${File.separator}lib.rs")).apply {
+        TestCases(project,
+            task,
+            jniHost,
+            ndkDir = ndkDir,
+            rustFile = File(rustFile, "src${File.separator}lib.rs"),
+            cargoConfigFile = File(rustFile,".cargo/config.toml"),
+        ).apply {
             all()
             finish()
         }
