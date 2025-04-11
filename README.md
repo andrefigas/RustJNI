@@ -174,6 +174,27 @@ rustJni{
 }
 ```
 
+### How to define what Rust version is acceptable to compile your project ?
+
+You can define the Rust version that is acceptable to compile your project.
+This is useful if you want to ensure that your project is always compiled with a specific version of Rust.
+
+```kotlin
+rustJni{
+    //...
+    rustVersion = "1.86.0"
+    //...
+}
+```
+
+#### Supported `rustVersion` patterns
+
+| Feature           | Pattern Example               | Description                                         |
+|------------------|-------------------------------|-----------------------------------------------------|
+| Exact version     | `1.86.0`                      | Only this exact Rust version is accepted           |
+| Minimum version   | `>=1.64.0`                    | Accepts any version greater than or equal to this  |
+| Wildcard version  | `1.86.*`, `1.*.*`             | Allows flexibility within minor and/or patch versions |
+
 ### How can I take a look at some samples?
 
 - [Java](./sample/java) - A java sample with 1 method

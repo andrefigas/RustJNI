@@ -3,7 +3,7 @@ import io.github.andrefigas.rustjni.reflection.Visibility
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("io.github.andrefigas.rustjni") version "0.0.23"
+    id("io.github.andrefigas.rustjni") version "0.0.24"
 }
 
 rustJni{
@@ -17,6 +17,7 @@ rustJni{
         i686_linux_android("i686-linux-android21-clang")
         x86_64_linux_android("x86_64-linux-android21-clang")
     }
+    rustVersion = ">=1.0.0"
 }
 
 android {
