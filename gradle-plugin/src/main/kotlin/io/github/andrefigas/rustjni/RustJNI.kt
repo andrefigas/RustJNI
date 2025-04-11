@@ -5,6 +5,7 @@ import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import io.github.andrefigas.rustjni.utils.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.util.Properties
@@ -24,10 +25,13 @@ class RustJNI : Plugin<Project> {
             }
         }
 
-        val helper = Helper(project, extension)
-        helper.registerCompileTask()
-        helper.registerInitTask()
-        helper.configureAndroidSettings()
+        project.afterEvaluate {
+            val helper = Helper(project, extension)
+            helper.validateRustVersion()
+            helper.registerCompileTask()
+            helper.registerInitTask()
+            helper.configureAndroidSettings()
+        }
     }
 
     private class Helper(
@@ -38,12 +42,22 @@ class RustJNI : Plugin<Project> {
         /** The directory where the rust project lives. See [RustJniExtension.rustPath]. */
         val rustDir: File by lazy { FileUtils.getRustDir(project, extension) }
 
-        private fun runCargoCommand(arguments: List<String>, dir: File = rustDir) {
-            runCommand("cargo", arguments, dir)
+        private fun runCargoCommand(arguments: List<String>,
+                                    dir: File = rustDir,
+                                    outputProcessor: ((String) -> Unit)? = null) {
+            runCommand("cargo", arguments, dir, outputProcessor)
         }
 
-        private fun runRustupCommand(arguments: List<String>, dir: File = rustDir) {
-            runCommand("rustup", arguments, dir)
+        private fun runRustupCommand(arguments: List<String>,
+                                     dir: File = rustDir,
+                                     outputProcessor: ((String) -> Unit)? = null) {
+            runCommand("rustup", arguments, dir, outputProcessor)
+        }
+
+        private fun runRustcCommand(arguments: List<String>,
+                                    dir: File = rustDir,
+                                    outputProcessor: ((String) -> Unit)? = null) {
+            runCommand("rustc", arguments, dir, outputProcessor)
         }
 
         /** Run a command like you would in a terminal.
@@ -51,17 +65,19 @@ class RustJNI : Plugin<Project> {
          * The [executable] can be one of the executables named in the **PATH** environment variable.
          *
          * Sets [dir] as the *current working directory (cwd)* of the command. */
-        private fun runCommand(executable: String, arguments: List<String>, dir: File = rustDir) {
+        private fun runCommand(
+            executable: String,
+            arguments: List<String>,
+            dir: File = rustDir,
+            outputProcessor: ((String) -> Unit)? = null
+        ) {
             val userHome = System.getProperty("user.home")
-            val isWindows = System.getProperty("os.name").toLowerCase().contains("win")
-            val exec_ext = if (isWindows) ".exe" else ""
-
-            val cargoBinDir = "$userHome${File.separator}.cargo${File.separator}bin"
-            val executablePath = "$cargoBinDir${File.separator}$executable$exec_ext"
+            val isWindows = System.getProperty("os.name").lowercase().contains("win")
+            val execExt = if (isWindows) ".exe" else ""
+            val executablePath = "$userHome${File.separator}.cargo${File.separator}bin${File.separator}$executable$execExt"
 
             val executableFile = File(executablePath)
             if (!executableFile.exists()) {
-                println("Executable not found at: $executablePath")
                 throw IllegalStateException("Executable not found at: $executablePath")
             }
 
@@ -70,30 +86,112 @@ class RustJNI : Plugin<Project> {
             try {
                 println("Running $executable command: ${fullCommand.joinToString(" ")} in $dir")
 
+                val output = if (outputProcessor != null) ByteArrayOutputStream() else null
+
                 val result = project.exec {
                     workingDir = dir
                     commandLine = fullCommand
                     isIgnoreExitValue = true
-                    standardOutput = System.out
+                    output?.let { standardOutput = it }
                     errorOutput = System.err
                 }
 
-                // Check the exit code to determine success or failure
                 if (result.exitValue != 0) {
-                    println("$executable command failed with exit code ${result.exitValue}")
-                    throw IllegalStateException("$executable command failed: ${fullCommand.joinToString(" ")} in $dir")
-                } else {
-                    println("$executable command succeeded.")
+                    throw IllegalStateException("$executable command failed with exit code ${result.exitValue}")
+                }
+
+                outputProcessor?.let { callback ->
+                    output?.toString()
+                        ?.lineSequence()
+                        ?.forEach { callback(it) }
                 }
 
             } catch (e: IOException) {
-                // Log specific message for I/O issues
-                println("IOException occurred while attempting to execute $executable command: ${e.message}")
-                throw IllegalStateException("Failed to execute $executable command due to an IOException in $dir", e)
+                throw IllegalStateException("IOException while executing $executable command in $dir", e)
             } catch (e: Exception) {
-                // General exception logging
-                println("An error occurred while executing $executable command: ${e.message}")
-                throw IllegalStateException("Failed to execute $executable command: ${fullCommand.joinToString(" ")} in $dir", e)
+                throw IllegalStateException("Failed to execute $executable command: ${fullCommand.joinToString(" ")}", e)
+            }
+        }
+
+        fun validateRustVersion() {
+            val versionRequired = extension.rustVersion
+            if (versionRequired.isEmpty()) {
+                project.logger.lifecycle("No rustVersion specified. Skipping validation.")
+                return
+            }
+
+            runRustcCommand(listOf("--version")) { output ->
+                val tokens = output.trim().split(" ")
+                if (tokens.size >= 2 && tokens[0] == "rustc") {
+                    val versionFound = tokens[1] // Ex: "1.86.0"
+                    val (foundMajor, foundMinor, foundPatch) = parseVersion(versionFound)
+
+                    when {
+                        versionRequired.startsWith(">=") -> {
+                            val required = parseVersion(versionRequired.removePrefix(">="))
+                            if (!isVersionGreaterOrEqual(
+                                    found = Triple(foundMajor, foundMinor, foundPatch),
+                                    required = required
+                                )
+                            ) {
+                                throw IllegalStateException("Rust version $versionFound is lower than required version $versionRequired")
+                            }
+                        }
+
+                        versionRequired.contains("*") -> {
+                            val requiredParts = versionRequired.split(".")
+                            if (requiredParts.size != 3) {
+                                throw IllegalArgumentException("Wildcard version must be in format 'x.y.z' where any of them may be '*'")
+                            }
+
+                            val match = listOf(
+                                requiredParts[0] == "*" || requiredParts[0].toInt() == foundMajor,
+                                requiredParts[1] == "*" || requiredParts[1].toInt() == foundMinor,
+                                requiredParts[2] == "*" || requiredParts[2].toInt() == foundPatch
+                            ).all { it }
+
+                            if (!match) {
+                                throw IllegalStateException("Rust version $versionFound does not match wildcard version $versionRequired")
+                            }
+                        }
+
+                        versionRequired.matches(Regex("""\d+\.\d+\.\d+""")) -> {
+                            if (versionFound != versionRequired) {
+                                throw IllegalStateException("Rust version $versionFound does not match required version $versionRequired")
+                            }
+                        }
+
+                        else -> {
+                            throw IllegalArgumentException("Unsupported rustVersion format: $versionRequired")
+                        }
+                    }
+
+                }
+            }
+        }
+
+        private fun parseVersion(version: String): Triple<Int, Int, Int> {
+            val parts = version.split(".")
+            if (parts.size != 3) throw IllegalArgumentException("Version must be in format x.y.z")
+            return Triple(
+                parts[0].toIntOrNull() ?: throw IllegalArgumentException("Invalid major version: ${parts[0]}"),
+                parts[1].toIntOrNull() ?: throw IllegalArgumentException("Invalid minor version: ${parts[1]}"),
+                parts[2].toIntOrNull() ?: throw IllegalArgumentException("Invalid patch version: ${parts[2]}")
+            )
+        }
+
+        private fun isVersionGreaterOrEqual(
+            found: Triple<Int, Int, Int>,
+            required: Triple<Int, Int, Int>
+        ): Boolean {
+            val (fMaj, fMin, fPatch) = found
+            val (rMaj, rMin, rPatch) = required
+            return when {
+                fMaj > rMaj -> true
+                fMaj < rMaj -> false
+                fMin > rMin -> true
+                fMin < rMin -> false
+                else -> fPatch >= rPatch
             }
         }
 

@@ -53,6 +53,26 @@ open class RustJniExtension {
      * Default is `true`. */
     var exportFunctions = true
     var applyAsCompileDependency = true
+
+    /**
+     * Specifies the required Rust version for this project.
+     *
+     * This field accepts the following formats:
+     *
+     * 1. Exact version:
+     *    - Example: "1.76.0"
+     *    - The build will require exactly this Rust version.
+     *
+     * 2. Minimum version (range):
+     *    - Example: ">=1.64.0"
+     *    - Indicates that the project requires at least version 1.64.0 of Rust or newer.
+     *
+     * 3. Wildcard version:
+     *    - Example: "1.76.*"
+     *    - Allows any patch version within the specified minor version (e.g., 1.76.0, 1.76.1, etc).
+     */
+    var rustVersion: String = ""
+
     private var architectures: (ArchitectureListScope.() -> Unit)? = null
 
     fun architectures(architectures: ArchitectureListScope.() -> Unit) {
