@@ -385,7 +385,7 @@ class RustJNI : Plugin<Project> {
                 use jni::objects::JClass;
                 //<RustJNI>
                 // primitive imports
-                use jni::sys::{jstring};
+                use jni::sys::jstring;
                 //</RustJNI>
     
                 #[no_mangle]

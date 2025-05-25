@@ -1,8 +1,8 @@
-use jni::JNIEnv;
 use jni::objects::JClass;
+use jni::JNIEnv;
 //<RustJNI>
 // primitive imports
-use jni::sys::{jstring};
+use jni::sys::jstring;
 //</RustJNI>
 
 #[no_mangle]
