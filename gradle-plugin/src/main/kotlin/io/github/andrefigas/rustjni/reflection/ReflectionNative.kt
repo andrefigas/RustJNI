@@ -261,7 +261,7 @@ internal object ReflectionNative {
             println("No imports were removed.")
         }
 
-        rustFile.writeText(filteredLines.joinToString("\n"))
+        rustFile.writeText(filteredLines.joinToString("\n") + "\n")
     }
 
     // Adds primitive imports to the Rust file if needed
@@ -279,7 +279,11 @@ internal object ReflectionNative {
         }
 
         if (primitiveTypes.isNotEmpty()) {
-            val importsLine = "use jni::sys::{${primitiveTypes.joinToString(", ")}};"
+            val importsLine = if (primitiveTypes.size == 1) {
+                "use jni::sys::${primitiveTypes.first()};"
+            } else {
+                "use jni::sys::{${primitiveTypes.joinToString(", ")}};"
+            }
             val updatedLines = lines.toMutableList()
             var inserted = false
 
@@ -299,7 +303,7 @@ internal object ReflectionNative {
             }
 
             println("Added Imports: $importsLine")
-            rustFile.writeText(updatedLines.joinToString("\n"))
+            rustFile.writeText(updatedLines.joinToString("\n") + "\n")
         }
     }
 
