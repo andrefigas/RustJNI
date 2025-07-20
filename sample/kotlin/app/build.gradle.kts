@@ -3,7 +3,7 @@ import io.github.andrefigas.rustjni.reflection.Visibility
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("io.github.andrefigas.rustjni") version "0.0.24"
+    id("io.github.andrefigas.rustjni") version "0.0.25"
 }
 
 rustJni{
