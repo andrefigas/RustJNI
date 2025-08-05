@@ -195,6 +195,17 @@ rustJni{
 | Minimum version   | `>=1.64.0`                    | Accepts any version greater than or equal to this  |
 | Wildcard version  | `1.86.*`, `1.*.*`             | Allows flexibility within minor and/or patch versions |
 
+### How to define a custom path for rust?
+
+By default, Rust is installed in the following directory:
+
+- **macOS/Linux**: `~/.cargo/bin`
+- **Windows**: `%USERPROFILE%\.cargo\bin`
+
+However, you can specify a custom installation directory by setting it in your **`local.properties`** file. For example:
+
+`cargo.dir=/Users/<user>/cargo_tmp/.cargo/bin`
+
 ### How can I take a look at some samples?
 
 - [Java](./sample/java) - A java sample with 1 method
