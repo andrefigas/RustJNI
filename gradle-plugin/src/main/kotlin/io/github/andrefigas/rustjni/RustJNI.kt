@@ -3,6 +3,7 @@ package io.github.andrefigas.rustjni
 import io.github.andrefigas.rustjni.reflection.ReflectionJVM
 import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import io.github.andrefigas.rustjni.utils.FileUtils
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.ByteArrayOutputStream
@@ -27,7 +28,6 @@ class RustJNI : Plugin<Project> {
 
         project.afterEvaluate {
             val helper = Helper(project, extension)
-            helper.validateRustVersion()
             helper.registerCompileTask()
             helper.registerInitTask()
             helper.configureAndroidSettings()
@@ -69,22 +69,27 @@ class RustJNI : Plugin<Project> {
             executable: String,
             arguments: List<String>,
             dir: File = rustDir,
-            outputProcessor: ((String) -> Unit)? = null
+            outputProcessor: ((String) -> Unit)? = null,
+            extraEnv: Map<String, String> = emptyMap()
         ) {
-            val userHome = System.getProperty("user.home")
             val isWindows = System.getProperty("os.name").lowercase().contains("win")
             val execExt = if (isWindows) ".exe" else ""
-            val executablePath = "$userHome${File.separator}.cargo${File.separator}bin${File.separator}$executable$execExt"
+            
+            val executablePath = "${getCargoDir()}$executable$execExt"
 
             val executableFile = File(executablePath)
             if (!executableFile.exists()) {
                 throw IllegalStateException("Executable not found at: $executablePath")
             }
 
-            val fullCommand = listOf(executablePath) + arguments
+            val fullCommand = listOf(executableFile.absolutePath) + arguments
 
             try {
                 println("Running $executable command: ${fullCommand.joinToString(" ")} in $dir")
+                if (extraEnv.isNotEmpty()) {
+                    println("With environment overrides:")
+                    extraEnv.forEach { (k, v) -> println("  $k = $v") }
+                }
 
                 val output = if (outputProcessor != null) ByteArrayOutputStream() else null
 
@@ -94,6 +99,7 @@ class RustJNI : Plugin<Project> {
                     isIgnoreExitValue = true
                     output?.let { standardOutput = it }
                     errorOutput = System.err
+                    environment(extraEnv)
                 }
 
                 if (result.exitValue != 0) {
@@ -168,6 +174,66 @@ class RustJNI : Plugin<Project> {
 
                 }
             }
+        }
+
+        private fun validateRustExecutable(file: File) {
+            if (!file.exists()) {
+                throw GradleException("Expected Rust executable not found: ${file.absolutePath}")
+            }
+
+            if (!file.canExecute()) {
+                throw GradleException("Rust executable is not executable: ${file.absolutePath}")
+            }
+
+            val process = try {
+                ProcessBuilder(file.absolutePath, "--version")
+                    .redirectErrorStream(true)
+                    .start()
+            } catch (e: Exception) {
+                throw GradleException("Failed to launch ${file.name} from path: ${file.absolutePath}", e)
+            }
+
+            val output = process.inputStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+
+            if (exitCode != 0) {
+                throw GradleException("${file.name} failed to execute with exit code $exitCode: $output")
+            }
+
+        }
+
+
+        /** Gets the cargo directory from `local.properties` or defaults to `$HOME/.cargo/bin/`.
+         *
+         * Throws an exception if the directory does not exist.
+         */
+        private fun getCargoDir(): String {
+            val props = Properties()
+            project.file("${project.rootProject.projectDir}${File.separator}local.properties")
+                .inputStream().use { props.load(it) }
+
+            var cargoDir = props.getProperty("cargo.dir")
+
+            if (cargoDir.isNullOrEmpty()) {
+                val userHome = System.getProperty("user.home")
+                cargoDir = "$userHome${File.separator}.cargo${File.separator}bin"
+            }
+
+            if (!cargoDir.endsWith(File.separator)) {
+                cargoDir += File.separator
+            }
+
+            val cargoDirFile = File(cargoDir)
+            if (!cargoDirFile.exists() || !cargoDirFile.isDirectory) {
+                throw GradleException("Cargo directory does not exist: $cargoDir")
+            }
+
+            val executables = listOf("cargo", "rustc", "rustup")
+            for (exe in executables) {
+                validateRustExecutable(File(cargoDirFile, exe))
+            }
+
+            return cargoDir
         }
 
         private fun parseVersion(version: String): Triple<Int, Int, Int> {
@@ -246,6 +312,7 @@ class RustJNI : Plugin<Project> {
         }
 
         private fun compileRustCode() {
+            validateRustVersion()
             validateArchitectures()
             addRustTargets()
             cleanBuildDirectory()
