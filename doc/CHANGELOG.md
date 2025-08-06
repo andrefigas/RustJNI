@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.26 (2025-08-06)
+### Added
+- Added support for a custom Rust path via
+e.g. `cargo.dir=/Users/<user>/cargo_tmp/.cargo/bin`
+
+### Changed
+- Moved Rust version checking from initialization to Rust compilation time
+
 ## 0.0.25 (2025-07-20)
 ### Changed
 Improved Rust code generation: when importing a single JNI primitive type, the import now uses the form ```use jni::sys::<primitive_type>;``` instead of ```use jni::sys::{<primitive_type>};```.
