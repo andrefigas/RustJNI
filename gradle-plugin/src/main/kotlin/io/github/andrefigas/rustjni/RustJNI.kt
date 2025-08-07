@@ -228,7 +228,9 @@ class RustJNI : Plugin<Project> {
                 throw GradleException("Cargo directory does not exist: $cargoDir")
             }
 
-            val executables = listOf("cargo", "rustc", "rustup")
+            val isWindows = System.getProperty("os.name").lowercase().contains("win")
+            val execExt = if (isWindows) ".exe" else ""
+            val executables = listOf("cargo$execExt", "rustc$execExt", "rustup$execExt")
             for (exe in executables) {
                 validateRustExecutable(File(cargoDirFile, exe))
             }
