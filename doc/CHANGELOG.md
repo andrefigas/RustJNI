@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.27 (2025-08-07)
+### Fixed
+- Fixed the support for Cargo checking on Windows
+
 ## 0.0.26 (2025-08-06)
 ### Added
 - Added support for a custom Rust path via

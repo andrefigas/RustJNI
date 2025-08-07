@@ -139,7 +139,7 @@ private external fun foo(): String
 private static native String foo();
 ```
 
-- You code have to be placed between the comments `//<RustJNI>` and `//</RustJNI>`
+- Your code have to be placed between the comments `//<RustJNI>` and `//</RustJNI>`
 
 ```
 //<RustJNI>
