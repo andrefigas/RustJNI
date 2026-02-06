@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0 (2026-02-06)
+### Fixed
+- Fixed rust path resolution in ReflectionJVM and ReflectionNative to resolve relative to project root instead of Gradle daemon directory
+
+### Added
+- Pass CC_<target> and AR_<target> environment variables to cargo build, enabling cross-compilation of Rust crates that depend on C code via cc-rs (e.g. ring, openssl-sys, libsqlite3-sys)
+- New REST API sample (`sample/restapi`) demonstrating HTTP client in Rust using Tokio, reqwest, and serde with the Dog API
+
 ## 0.0.27 (2025-08-07)
 ### Fixed
 - Fixed the support for Cargo checking on Windows

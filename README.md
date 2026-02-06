@@ -211,3 +211,4 @@ However, you can specify a custom installation directory by setting it in your *
 - [Java](./sample/java) - A java sample with 1 method
 - [Kotlin](./sample/kotlin) - A kotlin sample with 1 method
 - [Game](./sample/game) - A simple game without any engine like cocos2d, just Rust and Android
+- [REST API](./sample/restapi) - A REST API client using Tokio and reqwest in pure Rust
