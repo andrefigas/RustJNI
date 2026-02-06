@@ -1,0 +1,6 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.RestApi" parent="Theme.Material3.DayNight.NoActionBar">
+    </style>
+
+    <style name="Theme.RestApi" parent="Base.Theme.RestApi" />
+</resources>
