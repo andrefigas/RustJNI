@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">RustJNI REST API</string>
+    <string name="btn_random_dog">Random Dog</string>
+    <string name="btn_list_breeds">List Breeds</string>
+    <string name="btn_breed_image">Get Image</string>
+    <string name="hint_breed">Enter breed (e.g. husky)</string>
+    <string name="result_placeholder">Press a button to call the Dog API via Rust</string>
+    <string name="loading">Calling Dog API from Rust...</string>
+</resources>
