@@ -44,8 +44,9 @@ class RustJNI : Plugin<Project> {
 
         private fun runCargoCommand(arguments: List<String>,
                                     dir: File = rustDir,
-                                    outputProcessor: ((String) -> Unit)? = null) {
-            runCommand("cargo", arguments, dir, outputProcessor)
+                                    outputProcessor: ((String) -> Unit)? = null,
+                                    extraEnv: Map<String, String> = emptyMap()) {
+            runCommand("cargo", arguments, dir, outputProcessor, extraEnv)
         }
 
         private fun runRustupCommand(arguments: List<String>,
@@ -341,8 +342,20 @@ class RustJNI : Plugin<Project> {
         }
 
         private fun buildRustForArchitectures() {
+            val prebuiltPath = getPrebuiltPath()
             extension.architecturesList.forEach { archConfig ->
-                runCargoCommand(listOf("build", "--target", archConfig.target, "--release", "--verbose"))
+                val targetEnvKey = archConfig.target.replace('-', '_')
+                val linker = OSHelper.addLinkerExtensionIfNeeded(archConfig.linker)
+                val ccPath = "$prebuiltPath$linker"
+                val arPath = "$prebuiltPath${archConfig.ar}"
+                val envVars = mapOf(
+                    "CC_$targetEnvKey" to ccPath,
+                    "AR_$targetEnvKey" to arPath
+                )
+                runCargoCommand(
+                    listOf("build", "--target", archConfig.target, "--release", "--verbose"),
+                    extraEnv = envVars
+                )
             }
         }
 
