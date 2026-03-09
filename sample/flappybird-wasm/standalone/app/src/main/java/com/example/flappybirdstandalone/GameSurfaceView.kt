@@ -26,6 +26,7 @@ class GameSurfaceView @JvmOverloads constructor(
 
     private var gameThread: Thread? = null
     @Volatile private var running = false
+    @Volatile private var pendingInput = false
     private var scaleX = 1f
     private var scaleY = 1f
 
@@ -49,6 +50,10 @@ class GameSurfaceView @JvmOverloads constructor(
                 val dt = ((now - lastTime) / 1_000_000_000.0).toFloat().coerceAtMost(0.05f)
                 lastTime = now
 
+                if (pendingInput) {
+                    pendingInput = false
+                    wasm.gameOnInput()
+                }
                 wasm.gameUpdate(dt.toDouble())
 
                 val canvas = holder.lockCanvas() ?: continue
@@ -79,7 +84,7 @@ class GameSurfaceView @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.action == MotionEvent.ACTION_DOWN) {
-            wasm.gameOnInput()
+            pendingInput = true
         }
         return true
     }
