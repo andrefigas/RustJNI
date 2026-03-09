@@ -221,10 +221,31 @@ class RustWasm(
 
     private fun buildStandaloneWasm() {
         println("RustWasm: Building standalone WASM...")
+        ensureWasmTarget()
         runCargoCommand(
             listOf("build", "--target", "wasm32-unknown-unknown", "--release"),
             bridgeDir
         )
+    }
+
+    private fun ensureWasmTarget() {
+        val cargoDir = getCargoDir()
+        val isWindows = System.getProperty("os.name").lowercase().contains("win")
+        val execExt = if (isWindows) ".exe" else ""
+        val rustupPath = "${cargoDir}rustup${execExt}"
+
+        try {
+            println("RustWasm: Ensuring wasm32-unknown-unknown target is installed...")
+            val result = project.exec {
+                commandLine = listOf(rustupPath, "target", "add", "wasm32-unknown-unknown")
+                isIgnoreExitValue = true
+            }
+            if (result.exitValue != 0) {
+                println("RustWasm: WARNING - rustup target add failed (exit ${result.exitValue}), trying cargo build anyway...")
+            }
+        } catch (e: Exception) {
+            println("RustWasm: WARNING - Could not run rustup: ${e.message}, trying cargo build anyway...")
+        }
     }
 
     private fun buildBrowserWasm() {
