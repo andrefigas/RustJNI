@@ -1,0 +1,7 @@
+[package]
+name = "flappy_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Zero dependencies - pure game logic

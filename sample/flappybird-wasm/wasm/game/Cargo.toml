@@ -1,0 +1,32 @@
+[package]
+name = "flappy-bird"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+flappy_core = { path = "../../rust" }
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "Window",
+    "Document",
+    "HtmlCanvasElement",
+    "CanvasRenderingContext2d",
+    "Element",
+    "Event",
+    "KeyboardEvent",
+    "TouchEvent",
+    "MouseEvent",
+    "EventTarget",
+    "Performance",
+]
+
+[profile.release]
+opt-level = "s"
+lto = true

@@ -3,6 +3,9 @@ package io.github.andrefigas.rustjni
 import io.github.andrefigas.rustjni.reflection.ReflectionJVM
 import io.github.andrefigas.rustjni.reflection.ReflectionNative
 import io.github.andrefigas.rustjni.utils.FileUtils
+import io.github.andrefigas.rustjni.wasm.RustWasm
+import io.github.andrefigas.rustjni.wasm.RustWasmExtension
+import io.github.andrefigas.rustjni.wasm.WasmSettings
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -19,18 +22,29 @@ class RustJNI : Plugin<Project> {
 
     override fun apply(project: Project) {
         val extension = project.extensions.create("rustJni", RustJniExtension::class.java)
-
-        if (extension.applyAsCompileDependency) {
-            project.tasks.matching { it.name.startsWith("compile") }.configureEach {
-                this.dependsOn(RUST_JNI_COMPILE)
-            }
-        }
+        val wasmExtension = project.extensions.create("rustWasm", RustWasmExtension::class.java)
 
         project.afterEvaluate {
+            // Only register JNI tasks when applyAsCompileDependency is true
+            if (extension.applyAsCompileDependency) {
+                project.tasks.matching { it.name.startsWith("compile") }.configureEach {
+                    this.dependsOn(RUST_JNI_COMPILE)
+                }
+            }
+
             val helper = Helper(project, extension)
             helper.registerCompileTask()
             helper.registerInitTask()
             helper.configureAndroidSettings()
+
+            // Register WASM tasks if wasmHost or webViewHost is configured
+            if (wasmExtension.wasmHost.isNotEmpty() || wasmExtension.webViewHost.isNotEmpty()) {
+                val rustWasm = RustWasm(project, wasmExtension)
+                rustWasm.registerTask()
+                WasmSettings.configureAndroidAssets(project, wasmExtension)
+                WasmSettings.addChicoryDependencies(project, wasmExtension)
+                WasmSettings.addWebViewDependencies(project, wasmExtension)
+            }
         }
     }
 
