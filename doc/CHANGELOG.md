@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0 (2026-03-09)
+### Added
+- **WASM Bridge support (Experimental)**: Generate WASM bridges from Rust core libraries, enabling the same Rust logic to run on Android via Chicory (pure-Java WebAssembly runtime) or in the browser via wasm-bindgen
+- Two bridge modes:
+  - **Standalone (Chicory)**: Compiles Rust to raw WASM and generates Kotlin bridge code that loads it via Chicory runtime
+  - **Browser (wasm-bindgen)**: Compiles Rust with wasm-pack and generates JavaScript bridge files for WebView integration
+- `RustCoreParser`: Parses `pub fn` declarations from Rust core with `/// @wasm:` annotation support for host-provided parameters and callback returns
+- `rustWasm {}` DSL block for WASM configuration (`corePath`, `wasmHost`, `mode`, `chicoryVersion`, etc.)
+- Support for simple numeric return types (i32, i64, f32, f64, bool) in generated bridge code
+- `//<RustWasm>` and `//<RustWasm-imports>` marker-based code injection in Kotlin host classes
+- New Flappy Bird sample (`sample/flappybird-wasm`) demonstrating 3 platform targets from a single Rust core:
+  - `so/` — JNI native module using `flappy_core` as path dependency
+  - `standalone/` — Chicory WASM module with auto-generated bridge
+  - `wasm/` — Browser module with wasm-bindgen and Canvas 2D rendering
+- Utility scripts: `clean-generated.bat/.sh` and `run-browser.bat/.sh`
+
 ## 0.1.0 (2026-02-06)
 ### Fixed
 - Fixed rust path resolution in ReflectionJVM and ReflectionNative to resolve relative to project root instead of Gradle daemon directory

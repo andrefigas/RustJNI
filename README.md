@@ -206,9 +206,125 @@ However, you can specify a custom installation directory by setting it in your *
 
 `cargo.dir=/Users/<user>/cargo_tmp/.cargo/bin`
 
+---
+
+## WASM Bridge (Experimental)
+
+The plugin also supports generating WASM bridges from your Rust core library, allowing you to run the same Rust logic on Android via [Chicory](https://github.com/nicholasgasior/chicory) (a pure-Java WebAssembly runtime) or in the browser via [wasm-bindgen](https://github.com/nicholasgasior/chicory).
+
+### Additional Requirements for WASM
+
+| Requirement                                                       | Min. Version | Mode       |
+|-------------------------------------------------------------------|--------------|------------|
+| [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)      |              | Browser    |
+| [wasm32-unknown-unknown](https://doc.rust-lang.org/rustc/platform-support.html) target | | Both |
+
+Install the wasm32 target:
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+### WASM Setup
+
+**build.gradle.kts** (module level)
+```kotlin
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("io.github.andrefigas.rustjni")
+}
+
+rustJni { applyAsCompileDependency = false }
+
+rustWasm {
+    corePath = "./rust"
+    mode = WasmMode.STANDALONE // or WasmMode.BROWSER
+    wasmHost = "com.example.myapp.MainActivity"
+    wasmBridgePath = "./standalone/wasm"
+    chicoryVersion = "1.1.0"
+    wasmFileName = "myapp.wasm"
+}
+```
+
+### Standalone Mode (Chicory)
+
+In standalone mode, the plugin:
+1. Reads `pub fn` declarations from your Rust core (`corePath`)
+2. Generates a WASM bridge crate (raw `extern "C"` functions, no wasm-bindgen)
+3. Compiles to `.wasm` using `cargo build --target wasm32-unknown-unknown`
+4. Generates Kotlin bridge code that loads the WASM via Chicory runtime
+5. Injects the bridge code into your host class using `//<RustWasm>` markers
+
+Your Kotlin host class only needs the markers:
+```kotlin
+class MainActivity : AppCompatActivity() {
+    //<RustWasm-imports>
+    //</RustWasm-imports>
+
+    //<RustWasm>
+    //</RustWasm>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setupWasm(this) // auto-generated
+        // Now you can call your Rust functions:
+        // gameOnInput(), gameUpdate(dt), gameGetState(), etc.
+    }
+}
+```
+
+### Browser Mode (wasm-bindgen)
+
+In browser mode, the plugin:
+1. Reads `pub fn` declarations from your Rust core
+2. Generates a WASM bridge crate with `#[wasm_bindgen]` attributes
+3. Compiles using `wasm-pack build`
+4. Generates JavaScript bridge files (`bridge.js`, `index.js`)
+5. Injects WebView setup code into your Kotlin host class
+
+```kotlin
+rustWasm {
+    corePath = "./rust"
+    mode = WasmMode.BROWSER
+    webViewHost = "com.example.myapp.MainActivity"
+    assetsPath = "www"
+    htmlFileName = "index.html"
+}
+```
+
+### Supported WASM types
+
+| Rust Type     | Kotlin (Standalone) | JavaScript (Browser) |
+|---------------|--------------------|--------------------|
+| `i32`, `u32`  | `Int`              | `number`           |
+| `i64`, `u64`  | `Long`             | `BigInt`           |
+| `f32`         | `Float`            | `number`           |
+| `f64`         | `Double`           | `number`           |
+| `bool`        | `Boolean`          | `boolean`          |
+| `&str`        | `String`           | `string`           |
+
+### WASM annotations
+
+You can use doc-comment annotations to control bridge generation:
+
+```rust
+/// @wasm:host_provided(timestamp)
+/// @wasm:returns(on_result)
+pub fn calculate(user_id: i32, timestamp: i64, on_result: &dyn Fn(i32)) -> i32 {
+    // ...
+}
+```
+
+| Annotation                           | Description                                      |
+|--------------------------------------|--------------------------------------------------|
+| `@wasm:host_provided(param)`         | Parameter is provided by the host, not WASM      |
+| `@wasm:host_provided(param, "expr")` | Parameter provided by host with custom expression |
+| `@wasm:returns(callback)`            | Return value delivered via host callback          |
+
 ### How can I take a look at some samples?
 
 - [Java](./sample/java) - A java sample with 1 method
 - [Kotlin](./sample/kotlin) - A kotlin sample with 1 method
 - [Game](./sample/game) - A simple game without any engine like cocos2d, just Rust and Android
 - [REST API](./sample/restapi) - A REST API client using Tokio and reqwest in pure Rust
+- [Flappy Bird WASM](./sample/flappybird-wasm) - A Flappy Bird game running on 3 platforms: JNI native (.so), Chicory WASM (standalone), and browser (wasm-bindgen)
