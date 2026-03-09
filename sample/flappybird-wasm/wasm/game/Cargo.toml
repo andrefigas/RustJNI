@@ -8,7 +8,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 flappy_core = { path = "../../rust" }
-wasm-bindgen = "0.2"
+wasm-bindgen = "=0.2.100"
 js-sys = "0.3"
 
 [dependencies.web-sys]

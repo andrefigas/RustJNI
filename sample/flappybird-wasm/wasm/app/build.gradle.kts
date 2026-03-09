@@ -7,7 +7,7 @@ plugins {
 
 // ─── wasm-pack build task ────────────────────────────────────────────────────
 val wasmPackVersion = "0.13.1"
-val wasmBindgenCliVersion = "0.2.113"
+val wasmBindgenCliVersion = "0.2.100"
 val wasmGameDir = file("${rootProject.projectDir}/wasm/game")
 val wasmPkgDest = file("${projectDir}/src/main/assets/www/pkg")
 
