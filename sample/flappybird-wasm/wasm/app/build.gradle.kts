@@ -1,7 +1,67 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+
+// ─── wasm-pack build task ────────────────────────────────────────────────────
+val wasmGameDir = file("${rootProject.projectDir}/wasm/game")
+val wasmPkgDest = file("${projectDir}/src/main/assets/www/pkg")
+
+tasks.register("wasm-pack-build") {
+    group = "build"
+    description = "Compiles Rust WASM game with wasm-pack"
+    inputs.dir(file("${wasmGameDir}/src"))
+    inputs.file(file("${wasmGameDir}/Cargo.toml"))
+    outputs.dir(wasmPkgDest)
+
+    doLast {
+        // Find wasm-pack executable
+        val isWindows = System.getProperty("os.name").lowercase().contains("win")
+        val userHome = System.getProperty("user.home")
+        val props = Properties()
+        val localPropsFile = file("${rootProject.projectDir}/local.properties")
+        if (localPropsFile.exists()) localPropsFile.inputStream().use { props.load(it) }
+        var cargoDir = props.getProperty("cargo.dir") ?: ""
+        if (cargoDir.isEmpty()) cargoDir = "$userHome${File.separator}.cargo${File.separator}bin"
+        if (!cargoDir.endsWith(File.separator)) cargoDir = cargoDir + File.separator
+
+        // Ensure wasm32-unknown-unknown target is installed
+        val execExt = if (isWindows) ".exe" else ""
+        val rustupPath = "${cargoDir}rustup${execExt}"
+        try {
+            exec {
+                commandLine = listOf(rustupPath, "target", "add", "wasm32-unknown-unknown")
+                isIgnoreExitValue = true
+            }
+        } catch (_: Exception) {}
+
+        // Run wasm-pack build
+        val wasmPackPath = "${cargoDir}wasm-pack${execExt}"
+        val wasmPackFile = File(wasmPackPath)
+        val cmd = if (wasmPackFile.exists()) listOf(wasmPackFile.absolutePath) else listOf("wasm-pack")
+
+        println("Running wasm-pack build in $wasmGameDir ...")
+        exec {
+            workingDir = wasmGameDir
+            commandLine = cmd + listOf("build", "--target", "web", "--release")
+        }
+
+        // Copy pkg/ to assets
+        val srcPkg = file("${wasmGameDir}/pkg")
+        wasmPkgDest.mkdirs()
+        srcPkg.listFiles()?.forEach { f ->
+            f.copyTo(File(wasmPkgDest, f.name), overwrite = true)
+        }
+        println("Copied wasm-pack output to $wasmPkgDest")
+    }
+}
+
+tasks.matching { it.name.startsWith("compile") || it.name.startsWith("merge") }.configureEach {
+    dependsOn("wasm-pack-build")
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 android {
     namespace = "com.example.flappybird"
