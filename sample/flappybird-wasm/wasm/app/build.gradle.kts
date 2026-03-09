@@ -44,7 +44,7 @@ tasks.register("wasm-pack-build") {
             println("wasm-pack not found at $wasmPackPath, installing via cargo...")
             val cargoPath = "${cargoDir}cargo${execExt}"
             exec {
-                commandLine = listOf(cargoPath, "install", "wasm-pack", "--locked")
+                commandLine = listOf(cargoPath, "install", "wasm-pack", "--version", "0.13.1", "--locked")
                 isIgnoreExitValue = false
             }
         }
