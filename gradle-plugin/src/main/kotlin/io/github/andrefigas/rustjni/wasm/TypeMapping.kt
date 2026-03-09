@@ -39,6 +39,17 @@ object TypeMapping {
     fun isSimpleNumericType(rustType: String): Boolean =
         rustType.trim() in listOf("i32", "u8", "u16", "u32", "i64", "u64", "f32", "f64", "bool")
 
+    // Check if a float type (needs bit conversion for Chicory calls)
+    fun isFloatType(rustType: String): Boolean =
+        rustType.trim() in listOf("f32", "f64")
+
+    // Kotlin expression to convert a param value to long for Chicory apply()
+    fun kotlinParamToLong(paramExpr: String, rustType: String): String = when (rustType.trim()) {
+        "f64" -> "java.lang.Double.doubleToRawLongBits($paramExpr)"
+        "f32" -> "java.lang.Float.floatToRawIntBits($paramExpr).toLong()"
+        else -> "$paramExpr.toLong()"
+    }
+
     // Check if rust type is a string type (needs ptr+len in WASM)
     fun isStringType(rustType: String): Boolean =
         rustType.trim() in listOf("&str", "String", "&String")

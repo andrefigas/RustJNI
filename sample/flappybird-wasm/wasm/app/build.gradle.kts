@@ -37,9 +37,17 @@ tasks.register("wasm-pack-build") {
             }
         } catch (_: Exception) {}
 
-        // Run wasm-pack build
+        // Find or install wasm-pack
         val wasmPackPath = "${cargoDir}wasm-pack${execExt}"
         val wasmPackFile = File(wasmPackPath)
+        if (!wasmPackFile.exists()) {
+            println("wasm-pack not found at $wasmPackPath, installing via cargo...")
+            val cargoPath = "${cargoDir}cargo${execExt}"
+            exec {
+                commandLine = listOf(cargoPath, "install", "wasm-pack")
+                isIgnoreExitValue = false
+            }
+        }
         val cmd = if (wasmPackFile.exists()) listOf(wasmPackFile.absolutePath) else listOf("wasm-pack")
 
         println("Running wasm-pack build in $wasmGameDir ...")

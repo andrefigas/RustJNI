@@ -556,7 +556,8 @@ object StandaloneBridgeGenerator {
                     callArgs.add("${camelName}Ptr")
                     callArgs.add("${camelName}Bytes.size.toLong()")
                 } else {
-                    callArgs.add("${TypeMapping.snakeToCamel(param.name)}.toLong()")
+                    val camelName = TypeMapping.snakeToCamel(param.name)
+                    callArgs.add(TypeMapping.kotlinParamToLong(camelName, param.rustType))
                 }
             }
 

@@ -185,42 +185,87 @@ pub fn pseudo_random(seed: u32) -> f64 {
 // Standalone API (flat functions for WASM bridge generation)
 // ============================================================
 
-use std::sync::{Mutex, LazyLock};
+// JNI targets use Mutex (thread-safe); WASM is single-threaded, so use static mut.
+#[cfg(not(target_arch = "wasm32"))]
+mod game_state {
+    use super::*;
+    use std::sync::{Mutex, LazyLock};
 
-static GAME: LazyLock<Mutex<Game>> = LazyLock::new(|| Mutex::new(Game::new()));
+    static GAME: LazyLock<Mutex<Game>> = LazyLock::new(|| Mutex::new(Game::new()));
+
+    pub fn with_game<F: FnOnce(&Game) -> R, R>(f: F) -> R {
+        f(&GAME.lock().unwrap())
+    }
+
+    pub fn with_game_mut<F: FnOnce(&mut Game) -> R, R>(f: F) -> R {
+        f(&mut GAME.lock().unwrap())
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+mod game_state {
+    use super::*;
+    use core::cell::UnsafeCell;
+
+    struct WasmGame(UnsafeCell<Option<Game>>);
+    unsafe impl Sync for WasmGame {}
+
+    static GAME: WasmGame = WasmGame(UnsafeCell::new(None));
+
+    fn ensure_init() {
+        unsafe {
+            let ptr = GAME.0.get();
+            if (*ptr).is_none() {
+                *ptr = Some(Game::new());
+            }
+        }
+    }
+
+    pub fn with_game<F: FnOnce(&Game) -> R, R>(f: F) -> R {
+        ensure_init();
+        unsafe { f((*GAME.0.get()).as_ref().unwrap()) }
+    }
+
+    pub fn with_game_mut<F: FnOnce(&mut Game) -> R, R>(f: F) -> R {
+        ensure_init();
+        unsafe { f((*GAME.0.get()).as_mut().unwrap()) }
+    }
+}
+
+use game_state::*;
 
 pub fn game_on_input() {
-    if let Ok(mut g) = GAME.lock() { g.on_input(); }
+    with_game_mut(|g| g.on_input());
 }
 
 pub fn game_update(dt: f64) {
-    if let Ok(mut g) = GAME.lock() { g.update(dt); }
+    with_game_mut(|g| g.update(dt));
 }
 
 pub fn game_reset() {
-    if let Ok(mut g) = GAME.lock() { g.reset(); }
+    with_game_mut(|g| g.reset());
 }
 
 pub fn game_get_state() -> i32 {
-    if let Ok(g) = GAME.lock() {
-        match g.state { State::WaitingToStart => 0, State::Playing => 1, State::GameOver => 2 }
-    } else { 0 }
+    with_game(|g| match g.state {
+        State::WaitingToStart => 0, State::Playing => 1, State::GameOver => 2,
+    })
 }
 
 pub fn game_get_bird_y() -> f64 {
-    GAME.lock().map(|g| g.bird.y).unwrap_or(0.0)
+    with_game(|g| g.bird.y)
 }
 
 pub fn game_get_pipe_count() -> i32 {
-    GAME.lock().map(|g| g.pipes.len() as i32).unwrap_or(0)
+    with_game(|g| g.pipes.len() as i32)
 }
 
 pub fn game_get_pipe_x(index: i32) -> f64 {
-    GAME.lock().map(|g| g.pipes.get(index as usize).map(|p| p.x).unwrap_or(0.0)).unwrap_or(0.0)
+    with_game(|g| g.pipes.get(index as usize).map(|p| p.x).unwrap_or(0.0))
 }
 
 pub fn game_get_pipe_gap_y(index: i32) -> f64 {
-    GAME.lock().map(|g| g.pipes.get(index as usize).map(|p| p.gap_y).unwrap_or(0.0)).unwrap_or(0.0)
+    with_game(|g| g.pipes.get(index as usize).map(|p| p.gap_y).unwrap_or(0.0))
 }
 
 pub fn game_get_canvas_width() -> f64 {
