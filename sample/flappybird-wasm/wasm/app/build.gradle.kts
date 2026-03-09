@@ -7,6 +7,7 @@ plugins {
 
 // ─── wasm-pack build task ────────────────────────────────────────────────────
 val wasmPackVersion = "0.13.1"
+val wasmBindgenCliVersion = "0.2.113"
 val wasmGameDir = file("${rootProject.projectDir}/wasm/game")
 val wasmPkgDest = file("${projectDir}/src/main/assets/www/pkg")
 
@@ -39,17 +40,24 @@ tasks.register("wasm-pack-build") {
         } catch (_: Exception) {}
 
         // Find or install wasm-pack
+        val cargoPath = "${cargoDir}cargo${execExt}"
         val wasmPackPath = "${cargoDir}wasm-pack${execExt}"
         val wasmPackFile = File(wasmPackPath)
         if (!wasmPackFile.exists()) {
             println("wasm-pack not found at $wasmPackPath, installing via cargo...")
-            val cargoPath = "${cargoDir}cargo${execExt}"
             exec {
                 commandLine = listOf(cargoPath, "install", "wasm-pack", "--version", wasmPackVersion, "--locked")
                 isIgnoreExitValue = false
             }
         }
         val cmd = if (wasmPackFile.exists()) listOf(wasmPackFile.absolutePath) else listOf("wasm-pack")
+
+        // Pre-install wasm-bindgen-cli with --locked to avoid build failures on older Rust
+        println("Ensuring wasm-bindgen-cli $wasmBindgenCliVersion is installed...")
+        exec {
+            commandLine = listOf(cargoPath, "install", "wasm-bindgen-cli", "--version", wasmBindgenCliVersion, "--locked")
+            isIgnoreExitValue = true
+        }
 
         println("Running wasm-pack build in $wasmGameDir ...")
         exec {
